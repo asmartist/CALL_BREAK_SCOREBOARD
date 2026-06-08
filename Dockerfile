@@ -23,5 +23,5 @@ COPY . /app/
 # Expose port 8000
 EXPOSE 8000
 
-# Run the development server
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+# Run the production server
+CMD ["sh", "-c", "gunicorn --bind 0.0.0.0:${PORT:-8000} callbreak.wsgi:application"]
