@@ -27,7 +27,9 @@ class Match(models.Model):
     rule_profile_id = models.UUIDField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     completed_at = models.DateTimeField(null=True, blank=True)
+    updated_at = models.DateTimeField(auto_now=True)
     trump_suit = models.CharField(max_length=20, default='Spades ♠')
+    version = models.IntegerField(default=1)
 
     def __str__(self):
         return f"Match {self.id} ({self.status})"

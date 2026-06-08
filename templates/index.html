@@ -496,32 +496,43 @@
                 return;
             }
 
-            try {
-                const response = await fetch(`${API_BASE}/matches/`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ players })
-                });
+            const matchId = crypto.randomUUID();
+            const pObjs = players.map((name, idx) => ({
+                id: crypto.randomUUID(),
+                name: name.trim(),
+                seat_no: idx + 1
+            }));
 
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.error || "Failed to initialize match");
-                }
+            const newMatch = {
+                id: matchId,
+                status: 'BIDDING',
+                version: 1,
+                trump_suit: 'Spades ♠',
+                created_at: new Date().toISOString(),
+                completed_at: null,
+                players: pObjs,
+                current_round_index: 0,
+                synced: false,
+                rounds: Array.from({ length: 13 }, (_, idx) => ({
+                    id: crypto.randomUUID(),
+                    round_no: idx + 1,
+                    status: 'BIDDING',
+                    locked: false,
+                    bids_locked: false,
+                    trump_card: 'Spades',
+                    bids: pObjs.map(p => ({ player_id: p.id, bid: 2, is_blind: false })),
+                    results: pObjs.map(p => ({ player_id: p.id, tricks_won: 0, score: "0.00" }))
+                }))
+            };
 
-                const match = await response.json();
-                showToast("Match successfully initialized!");
-                
-                // Auto-start the match
-                const startResponse = await fetch(`${API_BASE}/matches/${match.id}/start/`, {
-                    method: 'POST'
-                });
-                if (!startResponse.ok) throw new Error("Could not start match.");
-                
-                // Redirect browser to game page
-                window.location.href = `/match/${match.id}/`;
-            } catch (err) {
-                showToast(err.message, "error");
-            }
+            let localMatches = JSON.parse(localStorage.getItem('cb_local_matches') || '[]');
+            localMatches.unshift(newMatch);
+            localStorage.setItem('cb_local_matches', JSON.stringify(localMatches));
+
+            showToast("Match successfully initialized locally!");
+            setTimeout(() => {
+                window.location.href = `/match/${matchId}/`;
+            }, 800);
         }
 
         async function loadHistory() {
@@ -529,18 +540,68 @@
                 const selectAllBox = document.getElementById('select-all-history');
                 if (selectAllBox) selectAllBox.checked = false;
 
-                const response = await fetch(`${API_BASE}/matches/`);
-                if (!response.ok) throw new Error("Failed to load match history.");
-                const matches = await response.json();
+                let serverMatches = [];
+                try {
+                    const response = await fetch(`${API_BASE}/matches/`);
+                    if (response.ok) {
+                        serverMatches = await response.json();
+                    }
+                } catch (e) {
+                    console.warn("Server is offline. Loading local history only.");
+                }
+
+                let localMatches = JSON.parse(localStorage.getItem('cb_local_matches') || '[]');
+                const mergedMatches = [];
+                const addedIds = new Set();
+
+                localMatches.forEach(m => {
+                    if (!m.synced) {
+                        mergedMatches.push({
+                            id: m.id,
+                            status: m.status,
+                            version: m.version,
+                            created_at: m.created_at,
+                            players: m.players,
+                            scores: m.players.map(p => {
+                                let total = 0.0;
+                                m.rounds.forEach(r => {
+                                    const res = r.results.find(res => res.player_id === p.id);
+                                    if (res) total += parseFloat(res.score || 0);
+                                });
+                                return { player_name: p.name, total_score: total };
+                            }),
+                            rounds_count: m.current_round_index + 1,
+                            synced: false
+                        });
+                        addedIds.add(m.id);
+                    }
+                });
+
+                serverMatches.forEach(m => {
+                    if (!addedIds.has(m.id)) {
+                        mergedMatches.push({
+                            id: m.id,
+                            status: m.status,
+                            version: m.version,
+                            created_at: m.created_at,
+                            players: m.match_players ? m.match_players.map(mp => ({ name: mp.player_name })) : [],
+                            scores: m.scores.map(s => ({ player_name: s.player_name, total_score: parseFloat(s.total_score) })),
+                            rounds_count: m.rounds_count,
+                            synced: true
+                        });
+                        addedIds.add(m.id);
+                    }
+                });
+
                 const tbody = document.querySelector('#history-table tbody');
                 tbody.innerHTML = '';
                 
-                if (matches.length === 0) {
+                if (mergedMatches.length === 0) {
                     tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-muted);">No match history available.</td></tr>`;
                     return;
                 }
 
-                matches.forEach(match => {
+                mergedMatches.forEach(match => {
                     const row = document.createElement('tr');
                     const dateStr = match.created_at ? new Date(match.created_at).toLocaleString() : 'N/A';
                     
@@ -552,23 +613,36 @@
                     } else {
                         statusBadge = '<span class="badge badge-info" style="background: rgba(236, 72, 153, 0.15); color: #f472b6;">In Progress</span>';
                     }
+
+                    if (!match.synced) {
+                        statusBadge += ' <span class="badge" style="background: rgba(244, 114, 182, 0.15); color: #f472b6; margin-left: 0.3rem;">Local</span>';
+                    }
                     
                     const playerScores = match.scores.map(s => {
-                        return `${s.player_name} (${parseFloat(s.total_score).toFixed(1)})`;
+                        return `${s.player_name} (${s.total_score.toFixed(1)})`;
                     }).join(', ');
                     
                     let actionsHTML = '';
-                    if (match.status === 'MATCH_COMPLETE') {
-                        actionsHTML = `
-                            <div style="display: flex; gap: 0.5rem;">
-                                <a class="btn btn-secondary" style="padding: 0.3rem 0.6rem; font-size: 0.8rem; margin: 0;" href="${API_BASE}/matches/${match.id}/export/?format=json" target="_blank">JSON</a>
-                                <a class="btn btn-secondary" style="padding: 0.3rem 0.6rem; font-size: 0.8rem; margin: 0;" href="${API_BASE}/matches/${match.id}/export/?format=csv" target="_blank">CSV</a>
-                                <a class="btn btn-secondary" style="padding: 0.3rem 0.6rem; font-size: 0.8rem; margin: 0;" href="${API_BASE}/matches/${match.id}/export/?format=pdf" target="_blank">PDF</a>
-                            </div>
-                        `;
+                    if (match.synced) {
+                        if (match.status === 'MATCH_COMPLETE') {
+                            actionsHTML = `
+                                <div style="display: flex; gap: 0.5rem;">
+                                    <a class="btn btn-secondary" style="padding: 0.3rem 0.6rem; font-size: 0.8rem; margin: 0;" href="${API_BASE}/matches/${match.id}/export/?format=json" target="_blank">JSON</a>
+                                    <a class="btn btn-secondary" style="padding: 0.3rem 0.6rem; font-size: 0.8rem; margin: 0;" href="${API_BASE}/matches/${match.id}/export/?format=csv" target="_blank">CSV</a>
+                                    <a class="btn btn-secondary" style="padding: 0.3rem 0.6rem; font-size: 0.8rem; margin: 0;" href="${API_BASE}/matches/${match.id}/export/?format=pdf" target="_blank">PDF</a>
+                                </div>
+                            `;
+                        } else {
+                            actionsHTML = `
+                                <button class="btn btn-primary" style="padding: 0.3rem 0.8rem; font-size: 0.8rem; margin: 0;" onclick="resumeMatch('${match.id}')">Resume</button>
+                            `;
+                        }
                     } else {
                         actionsHTML = `
-                            <button class="btn btn-primary" style="padding: 0.3rem 0.8rem; font-size: 0.8rem; margin: 0;" onclick="resumeMatch('${match.id}')">Resume</button>
+                            <div style="display: flex; gap: 0.5rem;">
+                                <button class="btn btn-primary" style="padding: 0.3rem 0.8rem; font-size: 0.8rem; margin: 0;" onclick="resumeMatch('${match.id}')">Resume</button>
+                                <button class="btn btn-success" style="padding: 0.3rem 0.8rem; font-size: 0.8rem; margin: 0; background: var(--accent);" onclick="syncMatch('${match.id}')">Sync</button>
+                            </div>
                         `;
                     }
                     
@@ -586,6 +660,47 @@
                 });
             } catch (err) {
                 console.error(err);
+            }
+        }
+
+        async function syncMatch(matchId) {
+            let localMatches = JSON.parse(localStorage.getItem('cb_local_matches') || '[]');
+            const m = localMatches.find(x => x.id === matchId);
+            if (!m) {
+                showToast("Match not found locally.", "error");
+                return;
+            }
+
+            m.version = (m.version || 1) + 1;
+
+            try {
+                const response = await fetch('/api/matches/sync/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(m)
+                });
+
+                if (!response.ok) {
+                    const errRes = await response.json();
+                    throw new Error(errRes.errors?.[0]?.error || "Sync failed");
+                }
+
+                const result = await response.json();
+                if (result.synced && result.synced.length > 0) {
+                    const syncDetails = result.synced[0];
+                    if (syncDetails.status === 'skipped') {
+                        showToast(`Server has a newer version. Sync skipped.`, "error");
+                    } else {
+                        m.synced = true;
+                        m.version = syncDetails.version;
+                        localStorage.setItem('cb_local_matches', JSON.stringify(localMatches));
+                        showToast("Successfully synced to the server cloud!");
+                        loadHistory();
+                        loadStats();
+                    }
+                }
+            } catch (err) {
+                showToast(err.message, "error");
             }
         }
 
@@ -613,22 +728,29 @@
 
             let deletedCount = 0;
             let failedCount = 0;
+            let localMatches = JSON.parse(localStorage.getItem('cb_local_matches') || '[]');
 
             for (const cb of checkboxes) {
                 const matchId = cb.value;
+                const localIndex = localMatches.findIndex(x => x.id === matchId);
+                if (localIndex > -1) {
+                    localMatches.splice(localIndex, 1);
+                    deletedCount++;
+                }
+
                 try {
                     const response = await fetch(`${API_BASE}/matches/${matchId}/`, {
                         method: 'DELETE'
                     });
                     if (response.ok) {
-                        deletedCount++;
-                    } else {
-                        failedCount++;
+                        if (localIndex === -1) deletedCount++;
                     }
                 } catch (err) {
-                    failedCount++;
+                    if (localIndex === -1) failedCount++;
                 }
             }
+
+            localStorage.setItem('cb_local_matches', JSON.stringify(localMatches));
 
             if (deletedCount > 0) {
                 showToast(`Successfully deleted ${deletedCount} match(es).`);

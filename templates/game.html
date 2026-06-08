@@ -497,9 +497,15 @@
 </head>
 <body>
 
-    <header>
-        <h1>Call Break Companion</h1>
-        <p class="subtitle">Lightweight Score Tracker</p>
+    <header style="display: flex; justify-content: space-between; align-items: center; width: 100%; max-width: 1200px; margin-bottom: 2.5rem; flex-wrap: wrap; gap: 1rem;">
+        <div style="text-align: left;">
+            <h1>Call Break Companion</h1>
+            <p class="subtitle">Lightweight Score Tracker</p>
+        </div>
+        <button id="sync-button" class="btn btn-secondary" onclick="syncActiveMatch()" style="width: auto; border-radius: 20px; font-size: 0.85rem; padding: 0.5rem 1rem; display: none; align-items: center; gap: 0.4rem;">
+            <span id="sync-status-dot" style="width: 8px; height: 8px; border-radius: 50%; background: #f472b6;"></span>
+            <span id="sync-text">Local Game (Sync to Cloud)</span>
+        </button>
     </header>
 
     <div class="container">
@@ -564,10 +570,14 @@
     <script>
         const API_BASE = '/api';
         const currentMatchId = "{{ match_id }}";
+        let localGameMode = false;
+        let localGame = null;
+        let localMatchesList = [];
+
         let currentRound = null;
         let matchPlayers = []; // [{id, name, seat_no, bid, is_blind, tricks_won, score}]
         let matchRounds = [];
-        let currentFlowMode = 'bids'; // 'bids' or 'results'
+        let currentFlowMode = 'bids'; // 'bids' or 'tricks'
         let isBidsSubmitted = false;
         let isScoreSubmitted = false;
 
@@ -594,90 +604,197 @@
 
         async function initGameplay() {
             try {
-                // Fetch match details
-                const response = await fetch(`${API_BASE}/matches/${currentMatchId}/`);
-                if (!response.ok) throw new Error("Failed to load match details.");
-                const match = await response.json();
-                
-                if (match.status === 'MATCH_COMPLETE') {
-                    window.location.href = `/match/${currentMatchId}/complete/`;
-                    return;
-                }
+                // Check if match is in local storage
+                localMatchesList = JSON.parse(localStorage.getItem('cb_local_matches') || '[]');
+                localGame = localMatchesList.find(m => m.id === currentMatchId);
 
-                // Set matchPlayers state
-                matchPlayers = match.match_players.map(p => {
-                    const scoreObj = match.scores.find(s => s.player === p.player);
-                    return {
-                        id: p.player,
-                        name: p.player_name,
-                        seat_no: p.seat_no,
-                        bid: 2,
-                        is_blind: false,
-                        tricks_won: 0,
-                        score: scoreObj ? parseFloat(scoreObj.total_score) : 0.0
-                    };
-                });
-
-                // Set default trump select from match object
-                const trumpSelect = document.getElementById('trump-suit-select');
-                if (trumpSelect) {
-                    trumpSelect.value = match.trump_suit || 'Spades ♠';
-                }
-
-                // Fetch rounds
-                const roundsRes = await fetch(`${API_BASE}/rounds/`);
-                if (!roundsRes.ok) throw new Error("Failed to load match rounds.");
-                const roundsData = await roundsRes.json();
-                
-                matchRounds = roundsData.filter(r => r.match === currentMatchId).sort((a,b) => a.round_no - b.round_no);
-                
-                if (matchRounds.length === 0) {
-                    throw new Error("No round initialized for this match.");
-                }
-
-                // Find active round
-                let activeRound = matchRounds.find(r => !r.locked);
-
-                if (activeRound) {
-                    currentRound = { id: activeRound.id, round_no: activeRound.round_no, bids_locked: activeRound.bids_locked };
-                    isBidsSubmitted = activeRound.bids && activeRound.bids.length === 4;
-                    isScoreSubmitted = activeRound.results && activeRound.results.length === 4;
+                if (localGame) {
+                    localGameMode = true;
+                    updateSyncButtonUI();
                     
-                    if (activeRound.status === 'PLAYING' || activeRound.status === 'SCORING') {
-                        currentFlowMode = 'tricks';
-                        matchPlayers.forEach(p => {
-                            const bidObj = activeRound.bids.find(b => b.player === p.id);
-                            if (bidObj) {
-                                p.bid = bidObj.bid;
-                                p.is_blind = bidObj.is_blind;
-                                const resultObj = activeRound.results ? activeRound.results.find(r => r.player === p.id) : null;
-                                p.tricks_won = resultObj ? resultObj.tricks_won : bidObj.bid;
-                            }
-                        });
-                        
-                        document.getElementById('mode-title').textContent = `Enter Tricks Won for Round ${activeRound.round_no}`;
-                        updateSubmitControls();
-                    } else {
-                        currentFlowMode = 'bids';
-                        matchPlayers.forEach(p => {
-                            const bidObj = activeRound.bids.find(b => b.player === p.id);
-                            if (bidObj) {
-                                p.bid = bidObj.bid;
-                                p.is_blind = bidObj.is_blind;
-                            }
-                        });
-                        document.getElementById('mode-title').textContent = `Enter Bids for Round ${activeRound.round_no}`;
-                        updateSubmitControls();
+                    if (localGame.status === 'MATCH_COMPLETE') {
+                        window.location.href = `/match/${currentMatchId}/complete/`;
+                        return;
                     }
-                    drawPlayerCards();
-                    updateLeaderboardView();
+
+                    // Set matchPlayers state
+                    matchPlayers = localGame.players.map(p => {
+                        let totalScore = 0.0;
+                        localGame.rounds.forEach(r => {
+                            const res = r.results.find(res => res.player_id === p.id);
+                            if (res && r.locked) {
+                                totalScore += parseFloat(res.score || 0);
+                            }
+                        });
+                        return {
+                            id: p.id,
+                            name: p.name,
+                            seat_no: p.seat_no,
+                            bid: 2,
+                            is_blind: false,
+                            tricks_won: 0,
+                            score: totalScore
+                        };
+                    });
+
+                    // Set default trump select
+                    const trumpSelect = document.getElementById('trump-suit-select');
+                    if (trumpSelect) {
+                        trumpSelect.value = localGame.trump_suit || 'Spades ♠';
+                    }
+
+                    matchRounds = localGame.rounds;
+
+                    // Find active round
+                    let activeRound = localGame.rounds.find(r => !r.locked);
+
+                    if (activeRound) {
+                        currentRound = { id: activeRound.id, round_no: activeRound.round_no, bids_locked: activeRound.bids_locked, locked: activeRound.locked };
+                        isBidsSubmitted = activeRound.bids_locked;
+                        
+                        // Check if scores are submitted for this round (all have scores calculated and non-zero tricks won)
+                        isScoreSubmitted = activeRound.status === 'COMPLETE' || activeRound.status === 'SCORING';
+
+                        if (activeRound.status === 'PLAYING' || activeRound.status === 'SCORING' || activeRound.bids_locked) {
+                            currentFlowMode = 'tricks';
+                            matchPlayers.forEach(p => {
+                                const bidObj = activeRound.bids.find(b => b.player_id === p.id);
+                                if (bidObj) {
+                                    p.bid = bidObj.bid;
+                                    p.is_blind = bidObj.is_blind;
+                                    const resultObj = activeRound.results ? activeRound.results.find(r => r.player_id === p.id) : null;
+                                    p.tricks_won = resultObj ? resultObj.tricks_won : bidObj.bid;
+                                }
+                            });
+                            document.getElementById('mode-title').textContent = `Enter Tricks Won for Round ${activeRound.round_no}`;
+                        } else {
+                            currentFlowMode = 'bids';
+                            matchPlayers.forEach(p => {
+                                const bidObj = activeRound.bids.find(b => b.player_id === p.id);
+                                if (bidObj) {
+                                    p.bid = bidObj.bid;
+                                    p.is_blind = bidObj.is_blind;
+                                }
+                            });
+                            document.getElementById('mode-title').textContent = `Enter Bids for Round ${activeRound.round_no}`;
+                        }
+
+                        updateSubmitControls();
+                        drawPlayerCards();
+                        updateLeaderboardView();
+                    } else {
+                        window.location.href = `/match/${currentMatchId}/complete/`;
+                    }
+
                 } else {
-                    // All rounds complete -> redirect to complete page
-                    window.location.href = `/match/${currentMatchId}/complete/`;
+                    // SERVER-SIDE MODE (Original logic)
+                    localGameMode = false;
+                    document.getElementById('sync-button').style.display = 'none';
+
+                    const response = await fetch(`${API_BASE}/matches/${currentMatchId}/`);
+                    if (!response.ok) throw new Error("Failed to load match details.");
+                    const match = await response.json();
+                    
+                    if (match.status === 'MATCH_COMPLETE') {
+                        window.location.href = `/match/${currentMatchId}/complete/`;
+                        return;
+                    }
+
+                    matchPlayers = match.match_players.map(p => {
+                        const scoreObj = match.scores.find(s => s.player === p.player);
+                        return {
+                            id: p.player,
+                            name: p.player_name,
+                            seat_no: p.seat_no,
+                            bid: 2,
+                            is_blind: false,
+                            tricks_won: 0,
+                            score: scoreObj ? parseFloat(scoreObj.total_score) : 0.0
+                        };
+                    });
+
+                    const trumpSelect = document.getElementById('trump-suit-select');
+                    if (trumpSelect) {
+                        trumpSelect.value = match.trump_suit || 'Spades ♠';
+                    }
+
+                    const roundsRes = await fetch(`${API_BASE}/rounds/`);
+                    if (!roundsRes.ok) throw new Error("Failed to load match rounds.");
+                    const roundsData = await roundsRes.json();
+                    
+                    matchRounds = roundsData.filter(r => r.match === currentMatchId).sort((a,b) => a.round_no - b.round_no);
+                    
+                    if (matchRounds.length === 0) {
+                        throw new Error("No round initialized for this match.");
+                    }
+
+                    let activeRound = matchRounds.find(r => !r.locked);
+
+                    if (activeRound) {
+                        currentRound = { id: activeRound.id, round_no: activeRound.round_no, bids_locked: activeRound.bids_locked, locked: activeRound.locked };
+                        isBidsSubmitted = activeRound.bids && activeRound.bids.length === 4;
+                        isScoreSubmitted = activeRound.results && activeRound.results.length === 4;
+                        
+                        if (activeRound.status === 'PLAYING' || activeRound.status === 'SCORING') {
+                            currentFlowMode = 'tricks';
+                            matchPlayers.forEach(p => {
+                                const bidObj = activeRound.bids.find(b => b.player === p.id);
+                                if (bidObj) {
+                                    p.bid = bidObj.bid;
+                                    p.is_blind = bidObj.is_blind;
+                                    const resultObj = activeRound.results ? activeRound.results.find(r => r.player === p.id) : null;
+                                    p.tricks_won = resultObj ? resultObj.tricks_won : bidObj.bid;
+                                }
+                            });
+                            document.getElementById('mode-title').textContent = `Enter Tricks Won for Round ${activeRound.round_no}`;
+                        } else {
+                            currentFlowMode = 'bids';
+                            matchPlayers.forEach(p => {
+                                const bidObj = activeRound.bids.find(b => b.player === p.id);
+                                if (bidObj) {
+                                    p.bid = bidObj.bid;
+                                    p.is_blind = bidObj.is_blind;
+                                }
+                            });
+                            document.getElementById('mode-title').textContent = `Enter Bids for Round ${activeRound.round_no}`;
+                        }
+                        updateSubmitControls();
+                        drawPlayerCards();
+                        updateLeaderboardView();
+                    } else {
+                        window.location.href = `/match/${currentMatchId}/complete/`;
+                    }
                 }
             } catch (err) {
                 showToast(err.message, "error");
             }
+        }
+
+        function updateSyncButtonUI() {
+            const syncBtn = document.getElementById('sync-button');
+            const dot = document.getElementById('sync-status-dot');
+            const text = document.getElementById('sync-text');
+
+            if (!localGameMode) {
+                syncBtn.style.display = 'none';
+                return;
+            }
+
+            syncBtn.style.display = 'inline-flex';
+            if (localGame.synced) {
+                dot.style.background = '#34d399';
+                text.textContent = 'Synced to Cloud';
+                syncBtn.disabled = true;
+            } else {
+                dot.style.background = '#f472b6';
+                text.textContent = 'Local Game (Sync to Cloud)';
+                syncBtn.disabled = false;
+            }
+        }
+
+        function saveLocalGame() {
+            localStorage.setItem('cb_local_matches', JSON.stringify(localMatchesList));
+            updateSyncButtonUI();
         }
 
         function updateSubmitControls() {
@@ -706,7 +823,6 @@
                     endGameBtn.style.display = 'inline-block';
                 }
             } else {
-                // tricks mode
                 endGameBtn.style.display = 'none';
                 if (currentRound && currentRound.bids_locked) {
                     editBidsBtn.style.display = 'none';
@@ -821,6 +937,14 @@
         }
 
         async function saveMatchTrump(trumpCard) {
+            if (localGameMode) {
+                localGame.trump_suit = trumpCard;
+                localGame.synced = false;
+                saveLocalGame();
+                showToast(`Trump card saved locally: ${trumpCard}`);
+                return;
+            }
+
             try {
                 const response = await fetch(`${API_BASE}/matches/${currentMatchId}/`, {
                     method: 'PATCH',
@@ -835,6 +959,28 @@
         }
 
         async function loadRound(roundId, roundNo) {
+            if (localGameMode) {
+                const roundData = localGame.rounds.find(r => r.round_no === roundNo);
+                currentRound = { id: roundId, round_no: roundNo, bids_locked: roundData.bids_locked, locked: roundData.locked };
+                isBidsSubmitted = roundData.bids_locked;
+                isScoreSubmitted = roundData.status === 'COMPLETE';
+                currentFlowMode = 'bids';
+                
+                document.getElementById('round-indicator').textContent = `Round ${roundNo} / 13`;
+                document.getElementById('mode-title').textContent = `Enter Bids for Round ${roundNo}`;
+                
+                matchPlayers.forEach(p => {
+                    p.bid = 2;
+                    p.is_blind = false;
+                    p.tricks_won = 0;
+                });
+
+                updateSubmitControls();
+                drawPlayerCards();
+                updateLeaderboardView();
+                return;
+            }
+
             try {
                 const response = await fetch(`${API_BASE}/rounds/${roundId}/`);
                 const roundData = await response.json();
@@ -883,6 +1029,18 @@
                 return;
             }
 
+            if (localGameMode) {
+                localGame.status = 'MATCH_COMPLETE';
+                localGame.completed_at = new Date().toISOString();
+                localGame.synced = false;
+                saveLocalGame();
+                showToast("Match ended early!");
+                setTimeout(() => {
+                    window.location.href = `/match/${currentMatchId}/complete/`;
+                }, 800);
+                return;
+            }
+
             try {
                 const response = await fetch(`${API_BASE}/matches/${currentMatchId}/complete/`, {
                     method: 'POST',
@@ -902,6 +1060,21 @@
         }
 
         async function submitBids() {
+            if (localGameMode) {
+                const round = localGame.rounds.find(r => r.id === currentRound.id);
+                round.bids = matchPlayers.map(p => ({
+                    player_id: p.id,
+                    bid: p.bid,
+                    is_blind: p.is_blind
+                }));
+                localGame.synced = false;
+                saveLocalGame();
+                isBidsSubmitted = true;
+                showToast("Bids submitted locally (draft)!");
+                updateSubmitControls();
+                return;
+            }
+
             const payload = {
                 bids: matchPlayers.map(p => ({
                     player_id: p.id,
@@ -932,6 +1105,32 @@
         }
 
         async function lockBids() {
+            if (localGameMode) {
+                const round = localGame.rounds.find(r => r.id === currentRound.id);
+                round.bids = matchPlayers.map(p => ({
+                    player_id: p.id,
+                    bid: p.bid,
+                    is_blind: p.is_blind
+                }));
+                round.bids_locked = true;
+                round.status = 'PLAYING';
+                localGame.status = 'PLAYING';
+                localGame.synced = false;
+                saveLocalGame();
+
+                currentRound.bids_locked = true;
+                showToast("Bids locked locally!");
+                currentFlowMode = 'tricks';
+                matchPlayers.forEach(p => {
+                    p.tricks_won = p.bid;
+                });
+                document.getElementById('mode-title').textContent = `Enter Tricks Won for Round ${currentRound.round_no}`;
+                
+                updateSubmitControls();
+                drawPlayerCards();
+                return;
+            }
+
             const payload = {
                 bids: matchPlayers.map(p => ({
                     player_id: p.id,
@@ -970,10 +1169,59 @@
             }
         }
 
+        function localCalculateScore(bid, tricks, isBlind) {
+            let score = 0;
+            if (tricks >= bid) {
+                let extra = tricks - bid;
+                let effectiveExtra = Math.min(extra, 2);
+                score = (bid * 10) + (effectiveExtra * 1);
+                if (isBlind) score *= 2;
+            } else {
+                score = -bid * 10;
+            }
+            if (tricks === 8) score *= 2;
+            return score;
+        }
+
         async function submitTricks() {
             const totalTricks = matchPlayers.reduce((sum, p) => sum + p.tricks_won, 0);
             if (totalTricks !== 13) {
                 showToast(`Total tricks must sum to exactly 13. Currently: ${totalTricks}`, "error");
+                return;
+            }
+
+            if (localGameMode) {
+                const round = localGame.rounds.find(r => r.id === currentRound.id);
+                round.status = 'SCORING';
+                round.results = matchPlayers.map(p => {
+                    const bidObj = round.bids.find(b => b.player_id === p.id);
+                    const calculatedScore = localCalculateScore(bidObj.bid, p.tricks_won, bidObj.is_blind);
+                    return {
+                        player_id: p.id,
+                        tricks_won: p.tricks_won,
+                        score: calculatedScore.toFixed(2)
+                    };
+                });
+                localGame.synced = false;
+                saveLocalGame();
+
+                // Update total scores locally in player objects
+                matchPlayers.forEach(p => {
+                    let totalScore = 0.0;
+                    localGame.rounds.forEach(r => {
+                        const res = r.results.find(res => res.player_id === p.id);
+                        if (res && r.locked) {
+                            totalScore += parseFloat(res.score || 0);
+                        }
+                    });
+                    p.score = totalScore;
+                });
+
+                isScoreSubmitted = true;
+                showToast(`Round ${currentRound.round_no} scoring updated locally!`);
+                updateLeaderboardView();
+                updateSubmitControls();
+                drawPlayerCards();
                 return;
             }
 
@@ -997,11 +1245,9 @@
                     throw new Error(errorData.error || "Failed to submit results");
                 }
 
-                // Fetch the updated match scores
                 const matchResponse = await fetch(`${API_BASE}/matches/${currentMatchId}/`);
                 const matchData = await matchResponse.json();
 
-                // Update scores in local state
                 matchPlayers.forEach(p => {
                     const scoreObj = matchData.scores.find(s => s.player === p.id);
                     if (scoreObj) {
@@ -1031,6 +1277,56 @@
                 return;
             }
 
+            if (localGameMode) {
+                const round = localGame.rounds.find(r => r.id === currentRound.id);
+                round.status = 'COMPLETE';
+                round.locked = true;
+                round.results = matchPlayers.map(p => {
+                    const bidObj = round.bids.find(b => b.player_id === p.id);
+                    const calculatedScore = localCalculateScore(bidObj.bid, p.tricks_won, bidObj.is_blind);
+                    return {
+                        player_id: p.id,
+                        tricks_won: p.tricks_won,
+                        score: calculatedScore.toFixed(2)
+                    };
+                });
+
+                // Update total scores locally in player objects
+                matchPlayers.forEach(p => {
+                    let totalScore = 0.0;
+                    localGame.rounds.forEach(r => {
+                        const res = r.results.find(res => res.player_id === p.id);
+                        if (res && r.locked) {
+                            totalScore += parseFloat(res.score || 0);
+                        }
+                    });
+                    p.score = totalScore;
+                });
+
+                showToast(`Round ${currentRound.round_no} scoring locked locally!`);
+                
+                if (currentRound.round_no === 13) {
+                    localGame.status = 'MATCH_COMPLETE';
+                    localGame.completed_at = new Date().toISOString();
+                    localGame.synced = false;
+                    saveLocalGame();
+                    setTimeout(() => {
+                        window.location.href = `/match/${currentMatchId}/complete/`;
+                    }, 800);
+                } else {
+                    localGame.status = 'ROUND_COMPLETE';
+                    localGame.current_round_index = currentRound.round_no; // index becomes round_no (round_no is 1-indexed, meaning next index)
+                    localGame.rounds[localGame.current_round_index].status = 'BIDDING';
+                    localGame.synced = false;
+                    saveLocalGame();
+
+                    const nextRoundNo = currentRound.round_no + 1;
+                    const activeRound = localGame.rounds[localGame.current_round_index];
+                    loadRound(activeRound.id, nextRoundNo);
+                }
+                return;
+            }
+
             const payload = {
                 results: matchPlayers.map(p => ({
                     player_id: p.id,
@@ -1051,11 +1347,9 @@
                     throw new Error(errorData.error || "Failed to lock results");
                 }
 
-                // Fetch the updated match scores
                 const matchResponse = await fetch(`${API_BASE}/matches/${currentMatchId}/`);
                 const matchData = await matchResponse.json();
 
-                // Update scores in local state
                 matchPlayers.forEach(p => {
                     const scoreObj = matchData.scores.find(s => s.player === p.id);
                     if (scoreObj) {
@@ -1088,6 +1382,42 @@
             }
         }
 
+        async function syncActiveMatch() {
+            if (!localGameMode) return;
+
+            // Increment version when syncing to guarantee locking integrity
+            localGame.version = (localGame.version || 1) + 1;
+
+            try {
+                const response = await fetch('/api/matches/sync/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(localGame)
+                });
+
+                if (!response.ok) {
+                    const errRes = await response.json();
+                    throw new Error(errRes.errors?.[0]?.error || "Sync failed");
+                }
+
+                const result = await response.json();
+                if (result.synced && result.synced.length > 0) {
+                    const syncDetails = result.synced[0];
+                    if (syncDetails.status === 'skipped') {
+                        showToast(`Server has a newer version. Sync skipped.`, "error");
+                    } else {
+                        localGame.synced = true;
+                        localGame.version = syncDetails.version;
+                        saveLocalGame();
+                        showToast("Successfully synced active match to cloud!");
+                        updateSyncButtonUI();
+                    }
+                }
+            } catch (err) {
+                showToast(err.message, "error");
+            }
+        }
+
         function updateLeaderboardView() {
             const gameThead = document.querySelector('#current-game-table thead');
             const gameTbody = document.querySelector('#current-game-table tbody');
@@ -1098,10 +1428,8 @@
                 return;
             }
 
-            // 1. Sort players by seat_no ascending for consistent columns
             const orderedPlayers = [...matchPlayers].sort((a, b) => a.seat_no - b.seat_no);
 
-            // 2. Set the table header columns: Round, Player 1, Player 2, Player 3, Player 4
             gameThead.innerHTML = `
                 <tr>
                     <th style="width: 80px;">Round</th>
@@ -1109,10 +1437,8 @@
                 </tr>
             `;
 
-            // 3. Clear tbody
             gameTbody.innerHTML = '';
 
-            // 4. Populate rows for rounds (1 to 13)
             if (matchRounds.length === 0) {
                 gameTbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-muted);">No rounds played yet.</td></tr>`;
                 return;
@@ -1123,8 +1449,8 @@
                 let colsHTML = `<td><strong>R${round.round_no}</strong></td>`;
                 
                 orderedPlayers.forEach(player => {
-                    const result = round.results.find(res => res.player === player.id);
-                    if (result && round.status === 'COMPLETE') {
+                    const result = round.results.find(res => (res.player === player.id || res.player_id === player.id));
+                    if (result && (round.status === 'COMPLETE' || round.status === 'SCORING' || round.locked)) {
                         const score = parseFloat(result.score);
                         if (score < 0) {
                             colsHTML += `<td><span class="negative-circle">${score.toFixed(1)}</span></td>`;
@@ -1140,7 +1466,6 @@
                 gameTbody.appendChild(row);
             });
 
-            // 5. Add a final Cumulative Total Row
             const totalRow = document.createElement('tr');
             totalRow.style.borderTop = '2px solid var(--card-border)';
             totalRow.style.background = 'rgba(255, 255, 255, 0.01)';
