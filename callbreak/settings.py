@@ -94,6 +94,7 @@ except ImportError:
 DB_ENGINE = os.getenv('DB_ENGINE', 'django.db.backends.sqlite3')
 
 if DB_ENGINE == 'django.db.backends.postgresql':
+    db_sslmode = os.getenv('DB_SSLMODE')
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
@@ -102,6 +103,9 @@ if DB_ENGINE == 'django.db.backends.postgresql':
             'PASSWORD': os.getenv('DB_PASSWORD', 'postgres'),
             'HOST': os.getenv('DB_HOST', '127.0.0.1'),
             'PORT': os.getenv('DB_PORT', '5432'),
+            'OPTIONS': {
+                'sslmode': db_sslmode,
+            } if db_sslmode else {}
         }
     }
 else:
