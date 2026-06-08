@@ -91,30 +91,52 @@ try:
 except ImportError:
     pass
 
-DB_ENGINE = os.getenv('DB_ENGINE', 'django.db.backends.sqlite3')
+import urllib.parse as urlparse
 
-if DB_ENGINE == 'django.db.backends.postgresql':
-    db_sslmode = os.getenv('DB_SSLMODE')
+DATABASE_URL = os.getenv('DATABASE_URL')
+
+if DATABASE_URL:
+    url = urlparse.urlparse(DATABASE_URL)
+    query_params = urlparse.parse_qs(url.query)
+    ssl_mode = query_params.get('sslmode', [None])[0]
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
-            'NAME': os.getenv('DB_NAME', 'callbreak'),
-            'USER': os.getenv('DB_USER', 'postgres'),
-            'PASSWORD': os.getenv('DB_PASSWORD', 'postgres'),
-            'HOST': os.getenv('DB_HOST', '127.0.0.1'),
-            'PORT': os.getenv('DB_PORT', '5432'),
+            'NAME': url.path[1:],
+            'USER': url.username,
+            'PASSWORD': url.password,
+            'HOST': url.hostname,
+            'PORT': url.port or 5432,
             'OPTIONS': {
-                'sslmode': db_sslmode,
-            } if db_sslmode else {}
+                'sslmode': ssl_mode,
+            } if ssl_mode else {}
         }
     }
 else:
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
+    DB_ENGINE = os.getenv('DB_ENGINE', 'django.db.backends.sqlite3')
+
+    if DB_ENGINE == 'django.db.backends.postgresql':
+        db_sslmode = os.getenv('DB_SSLMODE')
+        DATABASES = {
+            'default': {
+                'ENGINE': 'django.db.backends.postgresql',
+                'NAME': os.getenv('DB_NAME', 'callbreak'),
+                'USER': os.getenv('DB_USER', 'postgres'),
+                'PASSWORD': os.getenv('DB_PASSWORD', 'postgres'),
+                'HOST': os.getenv('DB_HOST', '127.0.0.1'),
+                'PORT': os.getenv('DB_PORT', '5432'),
+                'OPTIONS': {
+                    'sslmode': db_sslmode,
+                } if db_sslmode else {}
+            }
         }
-    }
+    else:
+        DATABASES = {
+            'default': {
+                'ENGINE': 'django.db.backends.sqlite3',
+                'NAME': BASE_DIR / 'db.sqlite3',
+            }
+        }
 
 CORS_ALLOW_ALL_ORIGINS = True
 
