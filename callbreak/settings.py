@@ -91,11 +91,21 @@ try:
 except ImportError:
     pass
 
+import sys
 import urllib.parse as urlparse
+
+IS_TESTING = len(sys.argv) > 1 and sys.argv[1] == 'test'
 
 DATABASE_URL = os.getenv('DATABASE_URL')
 
-if DATABASE_URL:
+if IS_TESTING:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
+elif DATABASE_URL:
     url = urlparse.urlparse(DATABASE_URL)
     query_params = urlparse.parse_qs(url.query)
     ssl_mode = query_params.get('sslmode', [None])[0]

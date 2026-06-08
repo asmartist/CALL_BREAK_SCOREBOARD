@@ -24,9 +24,6 @@ def calculate_score(bid, tricks_won, is_blind=False):
             score *= Decimal('2.0')
     else:
         score = -bid_dec * Decimal('10.0')
-        
-        if is_blind:
-            score *= Decimal('2.0')
             
     # Apply "Exact 8 Tricks: Double Score"
     if tricks_won == 8:

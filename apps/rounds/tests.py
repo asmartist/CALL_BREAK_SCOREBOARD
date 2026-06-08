@@ -44,8 +44,8 @@ class RoundAndRulesTests(TestCase):
         # base=50, extra=1 -> score = 51 -> doubled = 102.00
         self.assertEqual(calculate_score(5, 6, is_blind=True), Decimal('102.00'))
         
-        # 8. Blind failure (double penalty)
-        self.assertEqual(calculate_score(5, 4, is_blind=True), Decimal('-100.00'))
+        # 8. Blind failure (no double penalty)
+        self.assertEqual(calculate_score(5, 4, is_blind=True), Decimal('-50.00'))
         
         # 9. Exact 8 tricks rule (double score)
         # success: bid 6, tricks 8 -> normal score 62.00 -> doubled = 124.00
