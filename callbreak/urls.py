@@ -32,8 +32,6 @@ from django.views.generic import TemplateView
 
 urlpatterns = [
     path('', TemplateView.as_view(template_name='index.html'), name='home'),
-    path('lite/', TemplateView.as_view(template_name='lite.html'), name='lite-home'),
-    path('mobile/', TemplateView.as_view(template_name='mobile.html'), name='mobile-home'),
     path('match/<uuid:match_id>/', TemplateView.as_view(template_name='game.html'), name='game'),
     path('match/<uuid:match_id>/complete/', TemplateView.as_view(template_name='complete.html'), name='complete'),
     path('admin/', admin.site.urls),
