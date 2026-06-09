@@ -363,6 +363,17 @@
         .sync-pending { background: rgba(236, 72, 153, 0.1); color: var(--secondary); }
         .sync-success { background: rgba(16, 185, 129, 0.1); color: var(--accent); }
 
+        .badge {
+            padding: 0.2rem 0.5rem;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            display: inline-block;
+        }
+
+        .badge-success { background: rgba(16, 185, 129, 0.15); color: #34d399; }
+        .badge-info { background: rgba(99, 102, 241, 0.15); color: #818cf8; }
+
         /* Leaderboard table */
         table {
             width: 100%;
@@ -409,32 +420,9 @@
 <body>
 
     <!-- App Header Bar -->
-    <header class="app-bar">
+    <header class="app-bar" style="justify-content: center;">
         <h1>Call Break</h1>
-        <div style="display: flex; align-items: center; gap: 0.8rem;">
-            <button onclick="openMobileSettingsModal()" style="background: none; border: none; font-size: 1.25rem; color: var(--text-main); cursor: pointer; padding: 0.2rem; display: flex; align-items: center; justify-content: center;">⚙️</button>
-            <div class="status-badge" id="online-status">
-                <span class="status-dot"></span>
-                <span id="status-label">Online</span>
-            </div>
-        </div>
     </header>
-
-    <!-- Mobile Settings Modal -->
-    <div id="mobile-settings-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 10000; align-items: center; justify-content: center;">
-        <div class="glass-card" style="width: 90%; max-width: 320px; padding: 1.5rem; border-radius: 16px; margin-bottom: 60px;">
-            <h3 style="margin-top: 0; margin-bottom: 1rem; color: #a5b4fc; font-size: 1.2rem;">Server Settings</h3>
-            <div class="form-group" style="margin-bottom: 1.2rem; text-align: left;">
-                <label style="display: block; margin-bottom: 0.4rem; font-size: 0.85rem; color: var(--text-muted);">Backend API Base URL</label>
-                <input type="text" id="settings-backend-url" placeholder="https://example.com" style="width: 100%; padding: 0.7rem; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--card-border); border-radius: 8px; color: var(--text-main); font-size: 0.95rem;">
-                <p style="color: var(--text-muted); font-size: 0.75rem; margin-top: 0.4rem; line-height: 1.3;">Specify the hosted Call Break server URL. Leave empty to use local development server.</p>
-            </div>
-            <div style="display: flex; gap: 0.8rem; justify-content: flex-end;">
-                <button class="btn btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.9rem;" onclick="closeMobileSettingsModal()">Cancel</button>
-                <button class="btn btn-primary" style="padding: 0.5rem 1rem; font-size: 0.9rem; width: auto;" onclick="saveMobileSettings()">Save</button>
-            </div>
-        </div>
-    </div>
 
     <!-- Screen 1: Game Play -->
     <div id="screen-play" class="screen">
@@ -504,6 +492,7 @@
                             <th>Win Rate</th>
                             <th>High Score</th>
                             <th>Avg Bid</th>
+                            <th>Blind Success</th>
                         </tr>
                     </thead>
                     <tbody id="leaderboard-body">
@@ -511,24 +500,6 @@
                     </tbody>
                 </table>
             </div>
-        </div>
-    </div>
-
-    <!-- Screen 4: Sync & Cloud Settings -->
-    <div id="screen-sync" class="screen hidden">
-        <div class="glass-card">
-            <h2>Database Sync Settings</h2>
-            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.2rem;">Push your offline-completed matches to the centralized server database.</p>
-            
-            <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--card-border); border-radius: 12px; padding: 1rem; margin-bottom: 1.2rem; display: flex; justify-content: space-between; align-items: center;">
-                <div>
-                    <div style="font-weight: 700; font-size: 0.95rem;" id="unsynced-count">0 Unsynced Matches</div>
-                    <div style="font-size: 0.75rem; color: var(--text-muted);">Matches awaiting upload</div>
-                </div>
-                <button class="btn btn-primary" style="width: auto; padding: 0.5rem 1rem;" onclick="syncAllMatches()">Sync Now</button>
-            </div>
-
-            <button class="btn btn-secondary" onclick="checkNetworkStatus()" style="font-size: 0.85rem;">Refresh Connection Check</button>
         </div>
     </div>
 
@@ -546,64 +517,18 @@
             <span class="tab-icon">🏆</span>
             <span class="tab-label">Leaderboard</span>
         </div>
-        <div class="tab-item" onclick="switchTab('sync')">
-            <span class="tab-icon">☁️</span>
-            <span class="tab-label">Sync</span>
-        </div>
     </nav>
 
     <div class="toast" id="toast">Alert Message</div>
 
     <script>
-        const getApiBase = () => {
-            const savedUrl = localStorage.getItem('cb_backend_url');
-            if (savedUrl) return savedUrl.replace(/\/+$/, '') + '/api';
-            return 'http://10.0.2.2:8000/api'; // default local dev server loopback for emulator
-        };
-        const API_BASE = getApiBase();
-
-        function openMobileSettingsModal() {
-            const modal = document.getElementById('mobile-settings-modal');
-            const urlInput = document.getElementById('settings-backend-url');
-            urlInput.value = localStorage.getItem('cb_backend_url') || '';
-            modal.style.display = 'flex';
-        }
-
-        function closeMobileSettingsModal() {
-            document.getElementById('mobile-settings-modal').style.display = 'none';
-        }
-
-        function saveMobileSettings() {
-            const urlInput = document.getElementById('settings-backend-url').value.trim();
-            if (urlInput) {
-                try {
-                    new URL(urlInput);
-                } catch (_) {
-                    showToast("Please enter a valid URL (e.g. https://example.com)", true);
-                    return;
-                }
-                localStorage.setItem('cb_backend_url', urlInput);
-            } else {
-                localStorage.removeItem('cb_backend_url');
-            }
-            closeMobileSettingsModal();
-            showToast("Settings saved. Reloading app...");
-            setTimeout(() => {
-                window.location.reload();
-            }, 800);
-        }
         let currentActiveMatch = null;
         let localMatches = []; // List of all matches stored locally
         let activeTab = 'play';
-        let isOnline = true;
 
         window.onload = function() {
             loadLocalData();
-            checkNetworkStatus();
             checkActiveGame();
-            
-            // Periodically check network status
-            setInterval(checkNetworkStatus, 10000);
         };
 
         function showToast(msg, error = false) {
@@ -622,17 +547,7 @@
 
         function saveLocalData() {
             localStorage.setItem('cb_mobile_matches', JSON.stringify(localMatches));
-            updateUnsyncedCounter();
         }
-
-        function checkNetworkStatus() {
-            isOnline = navigator.onLine;
-            const badge = document.getElementById('online-status');
-            const label = document.getElementById('status-label');
-            if (isOnline) {
-                badge.classList.remove('offline');
-                label.textContent = 'Online';
-            } else {
                 badge.classList.add('offline');
                 label.textContent = 'Offline';
             }
@@ -652,17 +567,14 @@
             document.querySelectorAll('.tab-item').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.screen').forEach(el => el.classList.add('hidden'));
 
-            // Set active tab trigger
-            const tabs = {'play': 0, 'history': 1, 'leaderboard': 2, 'sync': 3};
+            const tabs = {'play': 0, 'history': 1, 'leaderboard': 2};
             document.querySelectorAll('.tab-item')[tabs[tabId]].classList.add('active');
             document.getElementById(`screen-${tabId}`).classList.remove('hidden');
 
             activeTab = tabId;
 
-            // Trigger specific tab loads
             if (tabId === 'history') renderHistory();
             if (tabId === 'leaderboard') renderLeaderboard();
-            if (tabId === 'sync') updateUnsyncedCounter();
         }
 
         function initMobileGame() {
@@ -741,10 +653,11 @@
                     `;
                 }
 
+                let totalHTML = round.status === 'BIDDING' ? '' : `<span class="p-total-score">Total: ${totalScore.toFixed(2)}</span>`;
                 row.innerHTML = `
                     <div class="p-info">
                         <span class="p-name">${player.name}</span>
-                        <span class="p-total-score">Total: ${totalScore.toFixed(2)}</span>
+                        ${totalHTML}
                     </div>
                     ${controls}
                 `;
@@ -906,16 +819,13 @@
             localMatches.forEach(match => {
                 const dateStr = new Date(match.created_at).toLocaleDateString();
                 const names = match.players.map(p => p.name).join(', ');
-                const syncBadge = match.synced 
-                    ? `<span class="sync-icon-status sync-success">Cloud Synced</span>` 
-                    : `<span class="sync-icon-status sync-pending">Local Cache Only</span>`;
 
                 const item = document.createElement('div');
                 item.className = 'history-item';
                 item.innerHTML = `
                     <div class="hist-info">
                         <span class="hist-names">${names}</span>
-                        <span class="hist-date">${dateStr} • Status: ${syncBadge}</span>
+                        <span class="hist-date">${dateStr}</span>
                     </div>
                 `;
                 container.appendChild(item);
@@ -923,10 +833,9 @@
         }
 
         function renderLeaderboard() {
-            const playerStats = {}; // name -> {wins: 0, games: 0, totalScore: 0, high: 0}
+            const playerStats = {}; // name -> {wins: 0, games: 0, totalScore: 0, high: -9999, bidCount: 0, bidSum: 0, blindBids: 0, blindWins: 0}
             
             localMatches.forEach(match => {
-                // Simple calculation to find player with max score in this match
                 let winnerId = null;
                 let maxScore = -9999;
                 const matchTotals = {};
@@ -947,7 +856,7 @@
 
                 match.players.forEach(p => {
                     if (!playerStats[p.name]) {
-                        playerStats[p.name] = { wins: 0, games: 0, totalScore: 0, high: -9999, bidCount: 0, bidSum: 0 };
+                        playerStats[p.name] = { wins: 0, games: 0, totalScore: 0, high: -9999, bidCount: 0, bidSum: 0, blindBids: 0, blindWins: 0 };
                     }
                     const stats = playerStats[p.name];
                     stats.games++;
@@ -958,12 +867,19 @@
                         stats.wins++;
                     }
 
-                    // Average bids
                     match.rounds.forEach(r => {
                         const b = r.bids.find(b => b.player_id === p.id);
                         if (b) {
                             stats.bidCount++;
                             stats.bidSum += b.bid;
+                            
+                            if (b.is_blind) {
+                                stats.blindBids++;
+                                const res = r.results.find(res => res.player_id === p.id);
+                                if (res && parseFloat(res.score) >= 0) {
+                                    stats.blindWins++;
+                                }
+                            }
                         }
                     });
                 });
@@ -979,7 +895,7 @@
             });
 
             if (sortedNames.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: var(--text-muted);">No statistics recorded yet.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-muted);">No statistics recorded yet.</td></tr>`;
                 return;
             }
 
@@ -987,77 +903,21 @@
                 const stat = playerStats[name];
                 const winRate = ((stat.wins / stat.games) * 100).toFixed(0);
                 const avgBid = stat.bidCount > 0 ? (stat.bidSum / stat.bidCount).toFixed(1) : '0';
+                const blindSuccessRate = stat.blindBids > 0 ? ((stat.blindWins / stat.blindBids) * 100).toFixed(0) : '0';
 
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td style="font-weight: 700;">${name}</td>
-                    <td>${winRate}% (${stat.wins}/${stat.games})</td>
-                    <td>${stat.high.toFixed(1)}</td>
+                    <td><span class="badge badge-info">${winRate}%</span></td>
+                    <td><span class="badge badge-success">${stat.high.toFixed(1)}</span></td>
                     <td>${avgBid}</td>
+                    <td>${blindSuccessRate}%</td>
                 `;
                 tbody.appendChild(row);
             });
         }
 
-        function updateUnsyncedCounter() {
-            const count = localMatches.filter(m => !m.synced).length;
-            document.getElementById('unsynced-count').textContent = `${count} Unsynced Matches`;
-        }
 
-        async function syncAllMatches() {
-            checkNetworkStatus();
-            if (!isOnline) {
-                showToast("You are currently offline. Please connect to the internet to sync.", true);
-                return;
-            }
-
-            const unsynced = localMatches.filter(m => !m.synced);
-            if (unsynced.length === 0) {
-                showToast("All local matches are already synchronized.");
-                return;
-            }
-
-            let successCount = 0;
-            let failCount = 0;
-
-            for (const match of unsynced) {
-                // Increment version when syncing to guarantee freshness
-                match.version = (match.version || 1) + 1;
-                
-                try {
-                    const response = await fetch(`${API_BASE}/matches/sync/`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(match)
-                    });
-
-                    if (!response.ok) throw new Error("Sync failed");
-                    
-                    const resJson = await response.json();
-                    if (resJson.synced && resJson.synced.length > 0) {
-                        const syncedDetail = resJson.synced[0];
-                        match.synced = true;
-                        match.version = syncedDetail.version;
-                        successCount++;
-                    } else {
-                        failCount++;
-                    }
-                } catch (err) {
-                    failCount++;
-                }
-            }
-
-            saveLocalData();
-            updateUnsyncedCounter();
-            renderHistory();
-
-            if (successCount > 0) {
-                showToast(`Successfully synced ${successCount} match(es) to the cloud!`);
-            }
-            if (failCount > 0) {
-                showToast(`Failed to sync ${failCount} match(es).`, true);
-            }
-        }
     </script>
 </body>
 </html>
