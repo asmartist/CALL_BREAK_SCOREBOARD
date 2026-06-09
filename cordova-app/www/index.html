@@ -2,13 +2,13 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Call Break Companion - Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Call Break Companion Mobile</title>
     <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-color: #0b0f19;
+            --bg-color: #080b11;
             --card-bg: rgba(255, 255, 255, 0.03);
             --card-border: rgba(255, 255, 255, 0.08);
             --primary: #6366f1;
@@ -18,7 +18,8 @@
             --text-main: #f3f4f6;
             --text-muted: #9ca3af;
             --danger: #ef4444;
-            --glass-blur: 16px;
+            --nav-bg: rgba(13, 17, 26, 0.85);
+            --glass-blur: 24px;
         }
 
         * {
@@ -26,347 +27,421 @@
             margin: 0;
             padding: 0;
             font-family: 'Outfit', sans-serif;
-            transition: all 0.3s ease;
+            -webkit-tap-highlight-color: transparent;
         }
 
         body {
             background-color: var(--bg-color);
             color: var(--text-main);
             min-height: 100vh;
-            padding: 2rem 1rem;
             display: flex;
             flex-direction: column;
-            align-items: center;
             overflow-x: hidden;
             background-image: 
-                radial-gradient(circle at 10% 20%, rgba(99, 102, 241, 0.15) 0%, transparent 40%),
-                radial-gradient(circle at 90% 80%, rgba(236, 72, 153, 0.15) 0%, transparent 40%);
+                radial-gradient(circle at 10% 15%, rgba(99, 102, 241, 0.15) 0%, transparent 35%),
+                radial-gradient(circle at 90% 85%, rgba(236, 72, 153, 0.15) 0%, transparent 35%);
+            padding-bottom: 70px; /* Space for navigation bar */
         }
 
-        header {
-            text-align: center;
-            margin-bottom: 2.5rem;
-            animation: fadeInDown 0.8s ease;
-        }
-
-        h1 {
-            font-size: 3rem;
-            font-weight: 800;
-            letter-spacing: -0.05em;
-            background: linear-gradient(135deg, #a5b4fc 0%, #6366f1 50%, #ec4899 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin-bottom: 0.5rem;
-        }
-
-        p.subtitle {
-            color: var(--text-muted);
-            font-size: 1.1rem;
-        }
-
-        .container {
-            width: 100%;
-            max-width: 1000px;
-            display: flex;
-            flex-direction: column;
-            gap: 2rem;
-        }
-
-        .glass-panel {
-            background: var(--card-bg);
-            border: 1px solid var(--card-border);
-            border-radius: 20px;
-            backdrop-filter: blur(var(--glass-blur));
-            padding: 2rem;
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
-            animation: fadeInUp 0.8s ease;
-        }
-
-        h2 {
-            font-size: 1.6rem;
-            font-weight: 600;
-            margin-bottom: 1.5rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            color: #a5b4fc;
-        }
-
-        .setup-grid {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 1rem;
-            margin-bottom: 1.5rem;
-        }
-
-        @media(min-width: 600px) {
-            .setup-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-        }
-
-        .form-group {
-            margin-bottom: 0.5rem;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-size: 0.9rem;
-            color: var(--text-muted);
-            font-weight: 500;
-        }
-
-        input[type="text"] {
-            width: 100%;
-            padding: 0.8rem 1rem;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid var(--card-border);
-            border-radius: 10px;
-            color: var(--text-main);
-            font-size: 1rem;
-        }
-
-        input[type="text"]:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 10px rgba(99, 102, 241, 0.3);
-        }
-
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            padding: 0.8rem 1.5rem;
-            border-radius: 10px;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            border: none;
-            text-decoration: none;
-            gap: 0.5rem;
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%);
-            color: white;
-            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
-        }
-
-        .btn-secondary {
-            background: rgba(255, 255, 255, 0.08);
-            color: var(--text-main);
-            border: 1px solid var(--card-border);
-        }
-
-        .btn-secondary:hover {
-            background: rgba(255, 255, 255, 0.15);
-            transform: translateY(-2px);
-        }
-
-        .btn-danger {
-            background: linear-gradient(135deg, var(--danger) 0%, #dc2626 100%);
-            color: white;
-        }
-
-        .btn-danger:hover {
-            transform: translateY(-2px);
-        }
-
-        /* Collapsible Panels */
-        .expandable-panel h2 {
-            cursor: pointer;
+        /* App Bar Header */
+        header.app-bar {
+            background: rgba(8, 11, 17, 0.6);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--card-border);
+            padding: 1rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            user-select: none;
-            margin-bottom: 0;
-        }
-        
-        .expandable-panel h2:hover {
-            color: #c7d2fe;
+            position: sticky;
+            top: 0;
+            z-index: 100;
         }
 
-        .expandable-panel .panel-content {
-            max-height: 1200px;
-            opacity: 1;
-            overflow: hidden;
-            transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease, margin-top 0.4s ease;
-            margin-top: 1.5rem;
+        header.app-bar h1 {
+            font-size: 1.4rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #a5b4fc 0%, #6366f1 50%, #ec4899 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
 
-        .expandable-panel.collapsed .panel-content {
-            max-height: 0;
-            opacity: 0;
-            margin-top: 0;
-            pointer-events: none;
+        .status-badge {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--accent);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            padding: 0.25rem 0.6rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
         }
 
-        .toggle-icon {
-            font-size: 1.1rem;
-            transition: transform 0.3s ease;
-            color: var(--text-muted);
-            margin-left: auto;
+        .status-badge.offline {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+            border-color: rgba(239, 68, 68, 0.2);
         }
 
-        .expandable-panel.collapsed .toggle-icon {
-            transform: rotate(-90deg);
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: currentColor;
         }
 
-        /* Stats & History styling */
-        .table-responsive {
-            overflow-x: auto;
+        /* Screen Container */
+        .screen {
+            padding: 1.2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.2rem;
+            animation: slideIn 0.3s cubic-bezier(0.1, 0.7, 0.1, 1);
             width: 100%;
         }
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 1rem;
+        @keyframes slideIn {
+            from { transform: translateX(30px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
         }
-
-        th, td {
-            padding: 0.8rem 1rem;
-            text-align: left;
-            border-bottom: 1px solid var(--card-border);
-        }
-
-        th {
-            font-weight: 600;
-            color: #a5b4fc;
-            font-size: 0.9rem;
-        }
-
-        td {
-            font-size: 0.95rem;
-        }
-
-        .badge {
-            padding: 0.2rem 0.6rem;
-            border-radius: 5px;
-            font-size: 0.8rem;
-            font-weight: 600;
-        }
-
-        .badge-success { background: rgba(16, 185, 129, 0.15); color: #34d399; }
-        .badge-info { background: rgba(99, 102, 241, 0.15); color: #818cf8; }
 
         .hidden {
             display: none !important;
         }
 
+        /* Cards & Panels */
+        .glass-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            backdrop-filter: blur(var(--glass-blur));
+            padding: 1.25rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .glass-card h2 {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #a5b4fc;
+            margin-bottom: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        /* Buttons & Forms */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.8rem 1.2rem;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            gap: 0.5rem;
+            width: 100%;
+            text-align: center;
+            color: var(--text-main);
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+        }
+
+        .btn-primary:active {
+            transform: scale(0.98);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--card-border);
+        }
+
+        .btn-secondary:active {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--accent) 0%, #059669 100%);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, var(--danger) 0%, #dc2626 100%);
+        }
+
+        .form-group {
+            margin-bottom: 0.8rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.4rem;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--card-border);
+            border-radius: 10px;
+            color: var(--text-main);
+            font-size: 0.95rem;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        /* Bottom Tab Bar */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 64px;
+            background: var(--nav-bg);
+            backdrop-filter: blur(var(--glass-blur));
+            border-top: 1px solid var(--card-border);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            z-index: 200;
+        }
+
+        .tab-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.25rem;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 0.4rem 0.8rem;
+            border-radius: 12px;
+            flex: 1;
+        }
+
+        .tab-item.active {
+            color: var(--primary);
+        }
+
+        .tab-icon {
+            font-size: 1.25rem;
+            font-weight: 800;
+        }
+
+        .tab-label {
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+
+        /* Gameplay Active Section */
+        .player-block {
+            background: rgba(255, 255, 255, 0.01);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 0.8rem 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 0.6rem;
+        }
+
+        .p-info {
+            display: flex;
+            flex-direction: column;
+            gap: 0.2rem;
+        }
+
+        .p-name {
+            font-weight: 700;
+            font-size: 1rem;
+        }
+
+        .p-total-score {
+            font-size: 0.75rem;
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        .p-controls {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+
+        .counter-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--card-border);
+            color: var(--text-main);
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+        }
+
+        .counter-val {
+            font-weight: 700;
+            font-size: 1.2rem;
+            min-width: 1.2rem;
+            text-align: center;
+        }
+
+        .blind-pill {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--card-border);
+            color: var(--text-muted);
+            padding: 0.25rem 0.5rem;
+            border-radius: 6px;
+            font-size: 0.7rem;
+            cursor: pointer;
+            font-weight: 700;
+        }
+
+        .blind-pill.active {
+            background: rgba(236, 72, 153, 0.15);
+            border-color: var(--secondary);
+            color: #f472b6;
+        }
+
+        .round-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.8rem;
+        }
+
+        /* History view */
+        .history-item {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 0.8rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .hist-info {
+            display: flex;
+            flex-direction: column;
+            gap: 0.3rem;
+        }
+
+        .hist-date {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .hist-names {
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .sync-icon-status {
+            font-size: 0.75rem;
+            padding: 0.2rem 0.5rem;
+            border-radius: 6px;
+            font-weight: 700;
+        }
+
+        .sync-pending { background: rgba(236, 72, 153, 0.1); color: var(--secondary); }
+        .sync-success { background: rgba(16, 185, 129, 0.1); color: var(--accent); }
+
+        /* Leaderboard table */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 0.6rem 0.8rem;
+            text-align: left;
+            border-bottom: 1px solid var(--card-border);
+            font-size: 0.85rem;
+        }
+
+        th {
+            color: #a5b4fc;
+        }
+
         /* Toast system */
         .toast {
             position: fixed;
-            bottom: 20px;
+            top: 20px;
+            left: 20px;
             right: 20px;
-            background: #1f2937;
+            background: #111827;
             border: 1px solid var(--card-border);
-            padding: 1rem 1.5rem;
-            border-radius: 10px;
+            padding: 0.8rem 1rem;
+            border-radius: 8px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.5);
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
             z-index: 1000;
-            transform: translateY(100px);
             opacity: 0;
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transform: translateY(-50px);
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            text-align: center;
+            font-weight: 600;
+            font-size: 0.9rem;
         }
 
         .toast.show {
-            transform: translateY(0);
             opacity: 1;
-        }
-
-        .toast-success { border-left: 4px solid var(--accent); }
-        .toast-error { border-left: 4px solid var(--danger); }
-
-        @keyframes fadeInDown {
-            from { opacity: 0; transform: translateY(-20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        @media(max-width: 768px) {
-            h1 {
-                font-size: 2.4rem;
-            }
-            .glass-panel {
-                padding: 1.5rem;
-            }
-        }
-
-        @media(max-width: 480px) {
-            h1 {
-                font-size: 2rem;
-            }
-            p.subtitle {
-                font-size: 0.95rem;
-            }
-            .glass-panel {
-                padding: 1.2rem;
-                border-radius: 15px;
-            }
-            body {
-                padding: 1rem 0.5rem;
-            }
-            .btn {
-                padding: 0.7rem 1.2rem;
-                font-size: 0.95rem;
-                width: 100%;
-            }
+            transform: translateY(0);
         }
     </style>
 </head>
 <body>
 
-    <header style="position: relative; width: 100%; max-width: 1000px; display: flex; justify-content: space-between; align-items: center; gap: 1rem;">
-        <div style="flex-grow: 1; text-align: center; margin-left: 44px;">
-            <h1>Call Break Companion</h1>
-            <p class="subtitle">Lightweight Score Tracker</p>
+    <!-- App Header Bar -->
+    <header class="app-bar">
+        <h1>Call Break</h1>
+        <div style="display: flex; align-items: center; gap: 0.8rem;">
+            <button onclick="openMobileSettingsModal()" style="background: none; border: none; font-size: 1.25rem; color: var(--text-main); cursor: pointer; padding: 0.2rem; display: flex; align-items: center; justify-content: center;">⚙️</button>
+            <div class="status-badge" id="online-status">
+                <span class="status-dot"></span>
+                <span id="status-label">Online</span>
+            </div>
         </div>
-        <button class="btn btn-secondary" onclick="openSettingsModal()" style="padding: 0.6rem; border-radius: 50%; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; margin-bottom: 1rem; border: 1px solid var(--card-border);">
-            ⚙️
-        </button>
     </header>
 
-    <!-- Settings Modal -->
-    <div id="settings-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 10000; align-items: center; justify-content: center;">
-        <div class="glass-panel" style="width: 90%; max-width: 400px; padding: 2rem; border-radius: 20px;">
-            <h2 style="margin-top: 0; display: flex; justify-content: space-between; align-items: center;">
-                <span>Settings</span>
-                <span style="font-size: 0.8rem; font-weight: normal; color: var(--text-muted);">Config</span>
-            </h2>
-            <div class="form-group" style="margin-bottom: 1.5rem; text-align: left;">
-                <label style="display: block; margin-bottom: 0.5rem; font-size: 0.9rem; color: var(--text-muted); font-weight: 500;">Backend API Base URL</label>
-                <input type="text" id="settings-backend-url" placeholder="https://example.com" style="width: 100%; margin-bottom: 0.5rem; padding: 0.8rem 1rem; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--card-border); border-radius: 10px; color: var(--text-main); font-size: 1rem;">
-                <p style="color: var(--text-muted); font-size: 0.8rem; margin: 0; line-height: 1.3;">Specify the custom production server URL (e.g., live hosted Render URL). Leave empty to default to the local web server.</p>
+    <!-- Mobile Settings Modal -->
+    <div id="mobile-settings-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 10000; align-items: center; justify-content: center;">
+        <div class="glass-card" style="width: 90%; max-width: 320px; padding: 1.5rem; border-radius: 16px; margin-bottom: 60px;">
+            <h3 style="margin-top: 0; margin-bottom: 1rem; color: #a5b4fc; font-size: 1.2rem;">Server Settings</h3>
+            <div class="form-group" style="margin-bottom: 1.2rem; text-align: left;">
+                <label style="display: block; margin-bottom: 0.4rem; font-size: 0.85rem; color: var(--text-muted);">Backend API Base URL</label>
+                <input type="text" id="settings-backend-url" placeholder="https://example.com" style="width: 100%; padding: 0.7rem; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--card-border); border-radius: 8px; color: var(--text-main); font-size: 0.95rem;">
+                <p style="color: var(--text-muted); font-size: 0.75rem; margin-top: 0.4rem; line-height: 1.3;">Specify the hosted Call Break server URL. Leave empty to use local development server.</p>
             </div>
-            <div style="display: flex; gap: 1rem; justify-content: flex-end;">
-                <button class="btn btn-secondary" onclick="closeSettingsModal()">Cancel</button>
-                <button class="btn btn-primary" onclick="saveSettings()">Save</button>
+            <div style="display: flex; gap: 0.8rem; justify-content: flex-end;">
+                <button class="btn btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.9rem;" onclick="closeMobileSettingsModal()">Cancel</button>
+                <button class="btn btn-primary" style="padding: 0.5rem 1rem; font-size: 0.9rem; width: auto;" onclick="saveMobileSettings()">Save</button>
             </div>
         </div>
     </div>
 
-    <div class="container">
-        
-        <!-- Setup Seating / New Match Panel -->
-        <main class="glass-panel" id="setup-panel">
-            <h2>Create New Match</h2>
-            <p style="color: var(--text-muted); margin-bottom: 1.5rem; font-size: 0.95rem;">Enter the names of 4 players to register and seat them for a standard 13-round companion tracking session.</p>
-            
-            <div class="setup-grid">
+    <!-- Screen 1: Game Play -->
+    <div id="screen-play" class="screen">
+        <!-- Setup Game Card -->
+        <div class="glass-card" id="setup-card">
+            <h2>New Companion Match</h2>
+            <div style="display: flex; flex-direction: column; gap: 0.6rem; margin-top: 0.5rem;">
                 <div class="form-group">
                     <label>Player 1 (Seat 1)</label>
                     <input type="text" id="p1-name" value="Anmol">
@@ -383,443 +458,604 @@
                     <label>Player 4 (Seat 4)</label>
                     <input type="text" id="p4-name" value="Ankit">
                 </div>
-            </div>
-            
-            <button class="btn btn-primary" onclick="createMatch()" style="width: 100%; margin-top: 1rem;">
-                Initialize Seating & Create Match
-            </button>
-        </main>
-
-        <!-- Career Leaderboard Panel (Collapsible, Starts Collapsed) -->
-        <aside class="glass-panel expandable-panel collapsed" id="stats-panel">
-            <h2 onclick="togglePanel('stats-panel')">Player Leaderboard <span class="toggle-icon">▼</span></h2>
-            <div class="panel-content">
-                <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">Live career aggregates for all players registered on the system.</p>
-                <div class="table-responsive">
-                    <table id="stats-table">
-                        <thead>
-                            <tr>
-                                <th>Player</th>
-                                <th>Win %</th>
-                                <th>High Score</th>
-                                <th>Avg Bid</th>
-                                <th>Blind Success</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td colspan="5" style="text-align: center; color: var(--text-muted);">No player records found. Play a match to initialize stats.</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </aside>
-
-        <!-- Match History Panel (Collapsible, Starts Collapsed) -->
-        <div class="glass-panel expandable-panel collapsed" id="history-panel">
-            <h2 onclick="togglePanel('history-panel')">Match History <span class="toggle-icon">▼</span></h2>
-            <div class="panel-content">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 1rem;">
-                    <p style="color: var(--text-muted); font-size: 0.9rem; margin: 0;">View previous games, resume active matches, or download score sheets.</p>
-                    <button class="btn btn-danger" style="padding: 0.4rem 1rem; font-size: 0.85rem;" onclick="deleteSelectedMatches()">Delete Selected</button>
-                </div>
-                <div class="table-responsive">
-                    <table id="history-table">
-                        <thead>
-                            <tr>
-                                <th style="width: 40px;"><input type="checkbox" id="select-all-history" onchange="toggleSelectAllHistory(this)"></th>
-                                <th>Created</th>
-                                <th>Status</th>
-                                <th>Players & Scores</th>
-                                <th>Progress</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td colspan="6" style="text-align: center; color: var(--text-muted);">No match history available.</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
+                <button class="btn btn-primary" onclick="initMobileGame()" style="margin-top: 0.5rem;">Create Local Match</button>
             </div>
         </div>
 
+        <!-- Calculator Card -->
+        <div class="glass-card hidden" id="calc-card">
+            <div class="round-header">
+                <span id="round-lbl" style="font-weight: 800; font-size: 1.15rem; color: #c7d2fe;">Round 1 / 13</span>
+                <span id="mode-lbl" style="font-size: 0.8rem; font-weight: 600; background: rgba(99, 102, 241, 0.15); color: #818cf8; padding: 0.2rem 0.5rem; border-radius: 6px;">BIDDING</span>
+            </div>
+
+            <div id="players-rows" style="margin-bottom: 1rem;">
+                <!-- rows dynamic -->
+            </div>
+
+            <div style="display: flex; gap: 0.8rem; align-items: center; justify-content: space-between;">
+                <button class="btn btn-secondary" style="width: 35%;" onclick="prevRound()">Back</button>
+                <button class="btn btn-primary" style="flex-grow: 1;" onclick="submitRoundState()" id="action-btn">Submit Bids</button>
+            </div>
+        </div>
     </div>
 
-    <!-- Toast system -->
-    <div id="toast" class="toast">
-        <span id="toast-message">Notification message</span>
+    <!-- Screen 2: History -->
+    <div id="screen-history" class="screen hidden">
+        <div class="glass-card">
+            <h2>Match History</h2>
+            <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.8rem;">Locally stored matches played on this device.</p>
+            <div id="history-list">
+                <!-- dynamic -->
+            </div>
+        </div>
     </div>
+
+    <!-- Screen 3: Leaderboard -->
+    <div id="screen-leaderboard" class="screen hidden">
+        <div class="glass-card">
+            <h2>Career Stats</h2>
+            <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.8rem;">Aggregated local score analytics for all players.</p>
+            <div style="overflow-x: auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Player</th>
+                            <th>Win Rate</th>
+                            <th>High Score</th>
+                            <th>Avg Bid</th>
+                        </tr>
+                    </thead>
+                    <tbody id="leaderboard-body">
+                        <!-- dynamic -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Screen 4: Sync & Cloud Settings -->
+    <div id="screen-sync" class="screen hidden">
+        <div class="glass-card">
+            <h2>Database Sync Settings</h2>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.2rem;">Push your offline-completed matches to the centralized server database.</p>
+            
+            <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--card-border); border-radius: 12px; padding: 1rem; margin-bottom: 1.2rem; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <div style="font-weight: 700; font-size: 0.95rem;" id="unsynced-count">0 Unsynced Matches</div>
+                    <div style="font-size: 0.75rem; color: var(--text-muted);">Matches awaiting upload</div>
+                </div>
+                <button class="btn btn-primary" style="width: auto; padding: 0.5rem 1rem;" onclick="syncAllMatches()">Sync Now</button>
+            </div>
+
+            <button class="btn btn-secondary" onclick="checkNetworkStatus()" style="font-size: 0.85rem;">Refresh Connection Check</button>
+        </div>
+    </div>
+
+    <!-- Bottom Navigation Bar -->
+    <nav class="bottom-nav">
+        <div class="tab-item active" onclick="switchTab('play')">
+            <span class="tab-icon">🎴</span>
+            <span class="tab-label">Play</span>
+        </div>
+        <div class="tab-item" onclick="switchTab('history')">
+            <span class="tab-icon">📅</span>
+            <span class="tab-label">History</span>
+        </div>
+        <div class="tab-item" onclick="switchTab('leaderboard')">
+            <span class="tab-icon">🏆</span>
+            <span class="tab-label">Leaderboard</span>
+        </div>
+        <div class="tab-item" onclick="switchTab('sync')">
+            <span class="tab-icon">☁️</span>
+            <span class="tab-label">Sync</span>
+        </div>
+    </nav>
+
+    <div class="toast" id="toast">Alert Message</div>
 
     <script>
         const getApiBase = () => {
             const savedUrl = localStorage.getItem('cb_backend_url');
             if (savedUrl) return savedUrl.replace(/\/+$/, '') + '/api';
-            return (window.location.protocol === 'file:') ? 'http://10.0.2.2:8000/api' : '/api';
+            return 'http://10.0.2.2:8000/api'; // default local dev server loopback for emulator
         };
         const API_BASE = getApiBase();
 
-        function openSettingsModal() {
-            const modal = document.getElementById('settings-modal');
+        function openMobileSettingsModal() {
+            const modal = document.getElementById('mobile-settings-modal');
             const urlInput = document.getElementById('settings-backend-url');
             urlInput.value = localStorage.getItem('cb_backend_url') || '';
             modal.style.display = 'flex';
         }
 
-        function closeSettingsModal() {
-            document.getElementById('settings-modal').style.display = 'none';
+        function closeMobileSettingsModal() {
+            document.getElementById('mobile-settings-modal').style.display = 'none';
         }
 
-        function saveSettings() {
+        function saveMobileSettings() {
             const urlInput = document.getElementById('settings-backend-url').value.trim();
             if (urlInput) {
                 try {
                     new URL(urlInput);
                 } catch (_) {
-                    showToast("Please enter a valid URL (e.g. https://example.com)", "error");
+                    showToast("Please enter a valid URL (e.g. https://example.com)", true);
                     return;
                 }
                 localStorage.setItem('cb_backend_url', urlInput);
             } else {
                 localStorage.removeItem('cb_backend_url');
             }
-            closeSettingsModal();
-            showToast("Settings saved. Reloading page...");
+            closeMobileSettingsModal();
+            showToast("Settings saved. Reloading app...");
             setTimeout(() => {
                 window.location.reload();
             }, 800);
         }
+        let currentActiveMatch = null;
+        let localMatches = []; // List of all matches stored locally
+        let activeTab = 'play';
+        let isOnline = true;
 
         window.onload = function() {
-            loadStats();
-            loadHistory();
+            loadLocalData();
+            checkNetworkStatus();
+            checkActiveGame();
+            
+            // Periodically check network status
+            setInterval(checkNetworkStatus, 10000);
         };
 
-        function showToast(message, type = 'success') {
+        function showToast(msg, error = false) {
             const toast = document.getElementById('toast');
-            const toastMsg = document.getElementById('toast-message');
-            toast.className = 'toast show ' + (type === 'success' ? 'toast-success' : 'toast-error');
-            toastMsg.textContent = message;
-            setTimeout(() => {
-                toast.classList.remove('show');
-            }, 3000);
+            toast.textContent = msg;
+            toast.style.borderColor = error ? 'var(--danger)' : 'var(--accent)';
+            toast.style.borderLeft = error ? '4px solid var(--danger)' : '4px solid var(--accent)';
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
         }
 
-        function togglePanel(panelId) {
-            const panel = document.getElementById(panelId);
-            if (panel) {
-                panel.classList.toggle('collapsed');
+        function loadLocalData() {
+            const saved = localStorage.getItem('cb_mobile_matches');
+            localMatches = saved ? JSON.parse(saved) : [];
+        }
+
+        function saveLocalData() {
+            localStorage.setItem('cb_mobile_matches', JSON.stringify(localMatches));
+            updateUnsyncedCounter();
+        }
+
+        function checkNetworkStatus() {
+            isOnline = navigator.onLine;
+            const badge = document.getElementById('online-status');
+            const label = document.getElementById('status-label');
+            if (isOnline) {
+                badge.classList.remove('offline');
+                label.textContent = 'Online';
+            } else {
+                badge.classList.add('offline');
+                label.textContent = 'Offline';
             }
         }
 
-        async function loadStats() {
-            try {
-                const response = await fetch(`${API_BASE}/stats/`);
-                if (!response.ok) throw new Error("Failed to load statistics");
-                const stats = await response.json();
-                const tbody = document.querySelector('#stats-table tbody');
-                tbody.innerHTML = '';
-                
-                if (stats.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-muted);">No records found.</td></tr>`;
-                    return;
-                }
-
-                stats.forEach(player => {
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td style="font-weight: 600;">${player.player_name}</td>
-                        <td><span class="badge badge-info">${player.win_rate}%</span></td>
-                        <td><span class="badge badge-success">${player.highest_match_score.toFixed(2)}</span></td>
-                        <td>${player.avg_bid.toFixed(2)}</td>
-                        <td>${player.blind_success_rate}%</td>
-                    `;
-                    tbody.appendChild(row);
-                });
-            } catch (err) {
-                console.error(err);
+        function checkActiveGame() {
+            const savedGame = localStorage.getItem('cb_mobile_active_game');
+            if (savedGame) {
+                currentActiveMatch = JSON.parse(savedGame);
+                document.getElementById('setup-card').classList.add('hidden');
+                document.getElementById('calc-card').classList.remove('hidden');
+                renderActiveRound();
             }
         }
 
-        async function createMatch() {
-            const players = [
-                document.getElementById('p1-name').value,
-                document.getElementById('p2-name').value,
-                document.getElementById('p3-name').value,
-                document.getElementById('p4-name').value,
-            ];
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-item').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.screen').forEach(el => el.classList.add('hidden'));
 
-            if (players.some(p => !p.trim())) {
-                showToast("All 4 player names must be filled.", "error");
-                return;
-            }
+            // Set active tab trigger
+            const tabs = {'play': 0, 'history': 1, 'leaderboard': 2, 'sync': 3};
+            document.querySelectorAll('.tab-item')[tabs[tabId]].classList.add('active');
+            document.getElementById(`screen-${tabId}`).classList.remove('hidden');
 
-            const matchId = crypto.randomUUID();
-            const pObjs = players.map((name, idx) => ({
+            activeTab = tabId;
+
+            // Trigger specific tab loads
+            if (tabId === 'history') renderHistory();
+            if (tabId === 'leaderboard') renderLeaderboard();
+            if (tabId === 'sync') updateUnsyncedCounter();
+        }
+
+        function initMobileGame() {
+            const p1 = document.getElementById('p1-name').value.trim() || 'Player 1';
+            const p2 = document.getElementById('p2-name').value.trim() || 'Player 2';
+            const p3 = document.getElementById('p3-name').value.trim() || 'Player 3';
+            const p4 = document.getElementById('p4-name').value.trim() || 'Player 4';
+
+            const players = [p1, p2, p3, p4].map((name, idx) => ({
                 id: crypto.randomUUID(),
-                name: name.trim(),
+                name: name,
                 seat_no: idx + 1
             }));
 
-            const newMatch = {
-                id: matchId,
+            currentActiveMatch = {
+                id: crypto.randomUUID(),
                 status: 'BIDDING',
                 version: 1,
                 trump_suit: 'Spades ♠',
                 created_at: new Date().toISOString(),
                 completed_at: null,
-                players: pObjs,
+                players: players,
                 current_round_index: 0,
-                synced: false,
                 rounds: Array.from({ length: 13 }, (_, idx) => ({
                     id: crypto.randomUUID(),
                     round_no: idx + 1,
-                    status: 'BIDDING',
+                    status: 'BIDDING', // 'BIDDING' or 'RESULTS'
                     locked: false,
                     bids_locked: false,
                     trump_card: 'Spades',
-                    bids: pObjs.map(p => ({ player_id: p.id, bid: 2, is_blind: false })),
-                    results: pObjs.map(p => ({ player_id: p.id, tricks_won: 0, score: "0.00" }))
+                    bids: players.map(p => ({ player_id: p.id, bid: 2, is_blind: false })),
+                    results: players.map(p => ({ player_id: p.id, tricks_won: 0, score: "0.00" }))
                 }))
             };
 
-            let localMatches = JSON.parse(localStorage.getItem('cb_local_matches') || '[]');
-            localMatches.unshift(newMatch);
-            localStorage.setItem('cb_local_matches', JSON.stringify(localMatches));
-
-            showToast("Match successfully initialized locally!");
-            setTimeout(() => {
-                window.location.href = `game.html?match_id=${matchId}`;
-            }, 800);
+            localStorage.setItem('cb_mobile_active_game', JSON.stringify(currentActiveMatch));
+            document.getElementById('setup-card').classList.add('hidden');
+            document.getElementById('calc-card').classList.remove('hidden');
+            renderActiveRound();
         }
 
-        async function loadHistory() {
-            try {
-                const selectAllBox = document.getElementById('select-all-history');
-                if (selectAllBox) selectAllBox.checked = false;
+        function renderActiveRound() {
+            const round = currentActiveMatch.rounds[currentActiveMatch.current_round_index];
+            document.getElementById('round-lbl').textContent = `Round ${round.round_no} / 13`;
+            document.getElementById('mode-lbl').textContent = round.status;
 
-                let serverMatches = [];
-                try {
-                    const response = await fetch(`${API_BASE}/matches/`);
-                    if (response.ok) {
-                        serverMatches = await response.json();
-                    }
-                } catch (e) {
-                    console.warn("Server is offline. Loading local history only.");
+            const container = document.getElementById('players-rows');
+            container.innerHTML = '';
+
+            currentActiveMatch.players.forEach((player, idx) => {
+                const bidObj = round.bids.find(b => b.player_id === player.id);
+                const resObj = round.results.find(r => r.player_id === player.id);
+                const totalScore = calculateCumulativeScore(player.id, currentActiveMatch.current_round_index);
+
+                const row = document.createElement('div');
+                row.className = 'player-block';
+
+                let controls = '';
+                if (round.status === 'BIDDING') {
+                    controls = `
+                        <div class="p-controls">
+                            <button class="counter-btn" onclick="adjustBid(${idx}, -1)">-</button>
+                            <span class="counter-val">${bidObj.bid}</span>
+                            <button class="counter-btn" onclick="adjustBid(${idx}, 1)">+</button>
+                            <button class="blind-pill ${bidObj.is_blind ? 'active' : ''}" onclick="toggleBlind(${idx})">Blind</button>
+                        </div>
+                    `;
+                } else {
+                    controls = `
+                        <div class="p-controls">
+                            <span style="font-size: 0.75rem; color: var(--text-muted); margin-right: 0.2rem;">Bid: ${bidObj.bid} ${bidObj.is_blind ? '(B)' : ''}</span>
+                            <button class="counter-btn" onclick="adjustTricks(${idx}, -1)">-</button>
+                            <span class="counter-val">${resObj.tricks_won}</span>
+                            <button class="counter-btn" onclick="adjustTricks(${idx}, 1)">+</button>
+                        </div>
+                    `;
                 }
 
-                let localMatches = JSON.parse(localStorage.getItem('cb_local_matches') || '[]');
-                const mergedMatches = [];
-                const addedIds = new Set();
+                row.innerHTML = `
+                    <div class="p-info">
+                        <span class="p-name">${player.name}</span>
+                        <span class="p-total-score">Total: ${totalScore.toFixed(2)}</span>
+                    </div>
+                    ${controls}
+                `;
+                container.appendChild(row);
+            });
 
-                localMatches.forEach(m => {
-                    if (!m.synced) {
-                        mergedMatches.push({
-                            id: m.id,
-                            status: m.status,
-                            version: m.version,
-                            created_at: m.created_at,
-                            players: m.players,
-                            scores: m.players.map(p => {
-                                let total = 0.0;
-                                m.rounds.forEach(r => {
-                                    const res = r.results.find(res => res.player_id === p.id);
-                                    if (res) total += parseFloat(res.score || 0);
-                                });
-                                return { player_name: p.name, total_score: total };
-                            }),
-                            rounds_count: m.current_round_index + 1,
-                            synced: false
-                        });
-                        addedIds.add(m.id);
-                    }
-                });
+            const actBtn = document.getElementById('action-btn');
+            if (round.status === 'BIDDING') {
+                actBtn.textContent = 'Submit Bids';
+                actBtn.className = 'btn btn-primary';
+            } else {
+                actBtn.textContent = currentActiveMatch.current_round_index === 12 ? 'Finish Match' : 'Submit Scores & Next';
+                actBtn.className = 'btn btn-success';
+            }
+        }
 
-                serverMatches.forEach(m => {
-                    if (!addedIds.has(m.id)) {
-                        mergedMatches.push({
-                            id: m.id,
-                            status: m.status,
-                            version: m.version,
-                            created_at: m.created_at,
-                            players: m.match_players ? m.match_players.map(mp => ({ name: mp.player_name })) : [],
-                            scores: m.scores.map(s => ({ player_name: s.player_name, total_score: parseFloat(s.total_score) })),
-                            rounds_count: m.rounds_count,
-                            synced: true
-                        });
-                        addedIds.add(m.id);
-                    }
-                });
+        function calculateCumulativeScore(playerId, upToRoundIndex) {
+            let sum = 0.0;
+            for (let i = 0; i < upToRoundIndex; i++) {
+                const round = currentActiveMatch.rounds[i];
+                const res = round.results.find(r => r.player_id === playerId);
+                if (res) sum += parseFloat(res.score || 0);
+            }
+            return sum;
+        }
 
-                const tbody = document.querySelector('#history-table tbody');
-                tbody.innerHTML = '';
-                
-                if (mergedMatches.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-muted);">No match history available.</td></tr>`;
+        function adjustBid(playerIdx, delta) {
+            const round = currentActiveMatch.rounds[currentActiveMatch.current_round_index];
+            const pId = currentActiveMatch.players[playerIdx].id;
+            const bidObj = round.bids.find(b => b.player_id === pId);
+
+            bidObj.bid = Math.max(bidObj.is_blind ? 5 : 2, Math.min(13, bidObj.bid + delta));
+            localStorage.setItem('cb_mobile_active_game', JSON.stringify(currentActiveMatch));
+            renderActiveRound();
+        }
+
+        function toggleBlind(playerIdx) {
+            const round = currentActiveMatch.rounds[currentActiveMatch.current_round_index];
+            const pId = currentActiveMatch.players[playerIdx].id;
+            const bidObj = round.bids.find(b => b.player_id === pId);
+
+            bidObj.is_blind = !bidObj.is_blind;
+            if (bidObj.is_blind && bidObj.bid < 5) {
+                bidObj.bid = 5;
+            }
+            localStorage.setItem('cb_mobile_active_game', JSON.stringify(currentActiveMatch));
+            renderActiveRound();
+        }
+
+        function adjustTricks(playerIdx, delta) {
+            const round = currentActiveMatch.rounds[currentActiveMatch.current_round_index];
+            const pId = currentActiveMatch.players[playerIdx].id;
+            const resObj = round.results.find(r => r.player_id === pId);
+
+            resObj.tricks_won = Math.max(0, Math.min(13, resObj.tricks_won + delta));
+            localStorage.setItem('cb_mobile_active_game', JSON.stringify(currentActiveMatch));
+            renderActiveRound();
+        }
+
+        function prevRound() {
+            const round = currentActiveMatch.rounds[currentActiveMatch.current_round_index];
+            if (round.status === 'RESULTS') {
+                round.status = 'BIDDING';
+                localStorage.setItem('cb_mobile_active_game', JSON.stringify(currentActiveMatch));
+                renderActiveRound();
+            } else if (currentActiveMatch.current_round_index > 0) {
+                currentActiveMatch.current_round_index--;
+                const prevRoundObj = currentActiveMatch.rounds[currentActiveMatch.current_round_index];
+                prevRoundObj.locked = false;
+                prevRoundObj.bids_locked = false;
+                prevRoundObj.status = 'RESULTS';
+                localStorage.setItem('cb_mobile_active_game', JSON.stringify(currentActiveMatch));
+                renderActiveRound();
+            }
+        }
+
+        function submitRoundState() {
+            const round = currentActiveMatch.rounds[currentActiveMatch.current_round_index];
+            
+            if (round.status === 'BIDDING') {
+                round.status = 'RESULTS';
+                round.bids_locked = true;
+                localStorage.setItem('cb_mobile_active_game', JSON.stringify(currentActiveMatch));
+                renderActiveRound();
+            } else {
+                // Submit results
+                const tricksSum = round.results.reduce((s, r) => s + r.tricks_won, 0);
+                if (tricksSum !== 13) {
+                    showToast(`Tricks won must sum to exactly 13 (current sum is ${tricksSum}).`, true);
                     return;
                 }
 
-                mergedMatches.forEach(match => {
-                    const row = document.createElement('tr');
-                    const dateStr = match.created_at ? new Date(match.created_at).toLocaleString() : 'N/A';
-                    
-                    let statusBadge = '';
-                    if (match.status === 'MATCH_COMPLETE') {
-                        statusBadge = '<span class="badge badge-success">Completed</span>';
-                    } else if (match.status === 'READY') {
-                        statusBadge = '<span class="badge badge-info" style="background: rgba(16, 185, 129, 0.15); color: #34d399;">Ready</span>';
-                    } else {
-                        statusBadge = '<span class="badge badge-info" style="background: rgba(236, 72, 153, 0.15); color: #f472b6;">In Progress</span>';
-                    }
-
-                    if (!match.synced) {
-                        statusBadge += ' <span class="badge" style="background: rgba(244, 114, 182, 0.15); color: #f472b6; margin-left: 0.3rem;">Local</span>';
-                    }
-                    
-                    const playerScores = match.scores.map(s => {
-                        return `${s.player_name} (${s.total_score.toFixed(1)})`;
-                    }).join(', ');
-                    
-                    let actionsHTML = '';
-                    if (match.synced) {
-                        if (match.status === 'MATCH_COMPLETE') {
-                            actionsHTML = `
-                                <div style="display: flex; gap: 0.5rem;">
-                                    <a class="btn btn-secondary" style="padding: 0.3rem 0.6rem; font-size: 0.8rem; margin: 0;" href="${API_BASE}/matches/${match.id}/export/?format=json" target="_blank">JSON</a>
-                                    <a class="btn btn-secondary" style="padding: 0.3rem 0.6rem; font-size: 0.8rem; margin: 0;" href="${API_BASE}/matches/${match.id}/export/?format=csv" target="_blank">CSV</a>
-                                    <a class="btn btn-secondary" style="padding: 0.3rem 0.6rem; font-size: 0.8rem; margin: 0;" href="${API_BASE}/matches/${match.id}/export/?format=pdf" target="_blank">PDF</a>
-                                </div>
-                            `;
-                        } else {
-                            actionsHTML = `
-                                <button class="btn btn-primary" style="padding: 0.3rem 0.8rem; font-size: 0.8rem; margin: 0;" onclick="resumeMatch('${match.id}')">Resume</button>
-                            `;
-                        }
-                    } else {
-                        actionsHTML = `
-                            <div style="display: flex; gap: 0.5rem;">
-                                <button class="btn btn-primary" style="padding: 0.3rem 0.8rem; font-size: 0.8rem; margin: 0;" onclick="resumeMatch('${match.id}')">Resume</button>
-                                <button class="btn btn-success" style="padding: 0.3rem 0.8rem; font-size: 0.8rem; margin: 0; background: var(--accent);" onclick="syncMatch('${match.id}')">Sync</button>
-                            </div>
-                        `;
-                    }
-                    
-                    const progressText = `Round ${match.rounds_count} / 13`;
-                    
-                    row.innerHTML = `
-                        <td><input type="checkbox" class="history-select" value="${match.id}"></td>
-                        <td>${dateStr}</td>
-                        <td>${statusBadge}</td>
-                        <td style="font-weight: 500;">${playerScores || 'No players'}</td>
-                        <td>${progressText}</td>
-                        <td>${actionsHTML}</td>
-                    `;
-                    tbody.appendChild(row);
+                // Compute round scores
+                round.results.forEach(res => {
+                    const bidObj = round.bids.find(b => b.player_id === res.player_id);
+                    res.score = calculateScoreValue(bidObj.bid, res.tricks_won, bidObj.is_blind).toFixed(2);
                 });
-            } catch (err) {
-                console.error(err);
+
+                round.status = 'COMPLETE';
+                round.locked = true;
+
+                if (currentActiveMatch.current_round_index < 12) {
+                    currentActiveMatch.current_round_index++;
+                    localStorage.setItem('cb_mobile_active_game', JSON.stringify(currentActiveMatch));
+                    renderActiveRound();
+                } else {
+                    // Match Complete!
+                    currentActiveMatch.status = 'MATCH_COMPLETE';
+                    currentActiveMatch.completed_at = new Date().toISOString();
+                    
+                    // Save to localMatches pool
+                    localMatches.unshift({
+                        id: currentActiveMatch.id,
+                        status: currentActiveMatch.status,
+                        version: currentActiveMatch.version,
+                        trump_suit: currentActiveMatch.trump_suit,
+                        created_at: currentActiveMatch.created_at,
+                        completed_at: currentActiveMatch.completed_at,
+                        players: currentActiveMatch.players,
+                        rounds: currentActiveMatch.rounds,
+                        synced: false
+                    });
+                    
+                    saveLocalData();
+                    localStorage.removeItem('cb_mobile_active_game');
+                    currentActiveMatch = null;
+                    
+                    showToast("Match completed successfully!");
+                    document.getElementById('calc-card').classList.add('hidden');
+                    document.getElementById('setup-card').classList.remove('hidden');
+                    switchTab('history');
+                }
             }
         }
 
-        async function syncMatch(matchId) {
-            let localMatches = JSON.parse(localStorage.getItem('cb_local_matches') || '[]');
-            const m = localMatches.find(x => x.id === matchId);
-            if (!m) {
-                showToast("Match not found locally.", "error");
+        function calculateScoreValue(bid, tricks, isBlind) {
+            let score = 0;
+            if (tricks >= bid) {
+                let extra = tricks - bid;
+                let effectiveExtra = Math.min(extra, 2);
+                score = (bid * 10) + (effectiveExtra * 1);
+                if (isBlind) score *= 2;
+            } else {
+                score = -bid * 10;
+            }
+            if (tricks === 8) score *= 2;
+            return score;
+        }
+
+        function renderHistory() {
+            const container = document.getElementById('history-list');
+            container.innerHTML = '';
+
+            if (localMatches.length === 0) {
+                container.innerHTML = `<p style="color: var(--text-muted); text-align: center; font-size: 0.9rem; margin-top: 1rem;">No match history found.</p>`;
                 return;
             }
 
-            m.version = (m.version || 1) + 1;
+            localMatches.forEach(match => {
+                const dateStr = new Date(match.created_at).toLocaleDateString();
+                const names = match.players.map(p => p.name).join(', ');
+                const syncBadge = match.synced 
+                    ? `<span class="sync-icon-status sync-success">Cloud Synced</span>` 
+                    : `<span class="sync-icon-status sync-pending">Local Cache Only</span>`;
 
-            try {
-                const response = await fetch(`${API_BASE}/matches/sync/`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(m)
-                });
-
-                if (!response.ok) {
-                    const errRes = await response.json();
-                    throw new Error(errRes.errors?.[0]?.error || "Sync failed");
-                }
-
-                const result = await response.json();
-                if (result.synced && result.synced.length > 0) {
-                    const syncDetails = result.synced[0];
-                    if (syncDetails.status === 'skipped') {
-                        showToast(`Server has a newer version. Sync skipped.`, "error");
-                    } else {
-                        m.synced = true;
-                        m.version = syncDetails.version;
-                        localStorage.setItem('cb_local_matches', JSON.stringify(localMatches));
-                        showToast("Successfully synced to the server cloud!");
-                        loadHistory();
-                        loadStats();
-                    }
-                }
-            } catch (err) {
-                showToast(err.message, "error");
-            }
-        }
-
-        function resumeMatch(matchId) {
-            window.location.href = `game.html?match_id=${matchId}`;
-        }
-
-        function toggleSelectAllHistory(master) {
-            const checkboxes = document.querySelectorAll('.history-select');
-            checkboxes.forEach(cb => {
-                cb.checked = master.checked;
+                const item = document.createElement('div');
+                item.className = 'history-item';
+                item.innerHTML = `
+                    <div class="hist-info">
+                        <span class="hist-names">${names}</span>
+                        <span class="hist-date">${dateStr} • Status: ${syncBadge}</span>
+                    </div>
+                `;
+                container.appendChild(item);
             });
         }
 
-        async function deleteSelectedMatches() {
-            const checkboxes = document.querySelectorAll('.history-select:checked');
-            if (checkboxes.length === 0) {
-                showToast("Please select at least one match to delete.", "error");
-                return;
-            }
+        function renderLeaderboard() {
+            const playerStats = {}; // name -> {wins: 0, games: 0, totalScore: 0, high: 0}
+            
+            localMatches.forEach(match => {
+                // Simple calculation to find player with max score in this match
+                let winnerId = null;
+                let maxScore = -9999;
+                const matchTotals = {};
 
-            if (!confirm(`Are you sure you want to delete ${checkboxes.length} selected match(es)?`)) {
-                return;
-            }
-
-            let deletedCount = 0;
-            let failedCount = 0;
-            let localMatches = JSON.parse(localStorage.getItem('cb_local_matches') || '[]');
-
-            for (const cb of checkboxes) {
-                const matchId = cb.value;
-                const localIndex = localMatches.findIndex(x => x.id === matchId);
-                if (localIndex > -1) {
-                    localMatches.splice(localIndex, 1);
-                    deletedCount++;
-                }
-
-                try {
-                    const response = await fetch(`${API_BASE}/matches/${matchId}/`, {
-                        method: 'DELETE'
+                match.players.forEach(p => {
+                    let total = 0;
+                    match.rounds.forEach(r => {
+                        const res = r.results.find(res => res.player_id === p.id);
+                        if (res) total += parseFloat(res.score || 0);
                     });
-                    if (response.ok) {
-                        if (localIndex === -1) deletedCount++;
+                    matchTotals[p.name] = total;
+
+                    if (total > maxScore) {
+                        maxScore = total;
+                        winnerId = p.name;
+                    }
+                });
+
+                match.players.forEach(p => {
+                    if (!playerStats[p.name]) {
+                        playerStats[p.name] = { wins: 0, games: 0, totalScore: 0, high: -9999, bidCount: 0, bidSum: 0 };
+                    }
+                    const stats = playerStats[p.name];
+                    stats.games++;
+                    stats.totalScore += matchTotals[p.name];
+                    stats.high = Math.max(stats.high, matchTotals[p.name]);
+                    
+                    if (winnerId === p.name && match.status === 'MATCH_COMPLETE') {
+                        stats.wins++;
+                    }
+
+                    // Average bids
+                    match.rounds.forEach(r => {
+                        const b = r.bids.find(b => b.player_id === p.id);
+                        if (b) {
+                            stats.bidCount++;
+                            stats.bidSum += b.bid;
+                        }
+                    });
+                });
+            });
+
+            const tbody = document.getElementById('leaderboard-body');
+            tbody.innerHTML = '';
+
+            const sortedNames = Object.keys(playerStats).sort((a,b) => {
+                const rateA = playerStats[a].wins / playerStats[a].games;
+                const rateB = playerStats[b].wins / playerStats[b].games;
+                return rateB - rateA;
+            });
+
+            if (sortedNames.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: var(--text-muted);">No statistics recorded yet.</td></tr>`;
+                return;
+            }
+
+            sortedNames.forEach(name => {
+                const stat = playerStats[name];
+                const winRate = ((stat.wins / stat.games) * 100).toFixed(0);
+                const avgBid = stat.bidCount > 0 ? (stat.bidSum / stat.bidCount).toFixed(1) : '0';
+
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td style="font-weight: 700;">${name}</td>
+                    <td>${winRate}% (${stat.wins}/${stat.games})</td>
+                    <td>${stat.high.toFixed(1)}</td>
+                    <td>${avgBid}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function updateUnsyncedCounter() {
+            const count = localMatches.filter(m => !m.synced).length;
+            document.getElementById('unsynced-count').textContent = `${count} Unsynced Matches`;
+        }
+
+        async function syncAllMatches() {
+            checkNetworkStatus();
+            if (!isOnline) {
+                showToast("You are currently offline. Please connect to the internet to sync.", true);
+                return;
+            }
+
+            const unsynced = localMatches.filter(m => !m.synced);
+            if (unsynced.length === 0) {
+                showToast("All local matches are already synchronized.");
+                return;
+            }
+
+            let successCount = 0;
+            let failCount = 0;
+
+            for (const match of unsynced) {
+                // Increment version when syncing to guarantee freshness
+                match.version = (match.version || 1) + 1;
+                
+                try {
+                    const response = await fetch(`${API_BASE}/matches/sync/`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(match)
+                    });
+
+                    if (!response.ok) throw new Error("Sync failed");
+                    
+                    const resJson = await response.json();
+                    if (resJson.synced && resJson.synced.length > 0) {
+                        const syncedDetail = resJson.synced[0];
+                        match.synced = true;
+                        match.version = syncedDetail.version;
+                        successCount++;
+                    } else {
+                        failCount++;
                     }
                 } catch (err) {
-                    if (localIndex === -1) failedCount++;
+                    failCount++;
                 }
             }
 
-            localStorage.setItem('cb_local_matches', JSON.stringify(localMatches));
+            saveLocalData();
+            updateUnsyncedCounter();
+            renderHistory();
 
-            if (deletedCount > 0) {
-                showToast(`Successfully deleted ${deletedCount} match(es).`);
-                loadHistory();
-                loadStats();
+            if (successCount > 0) {
+                showToast(`Successfully synced ${successCount} match(es) to the cloud!`);
             }
-
-            if (failedCount > 0) {
-                showToast(`Failed to delete ${failedCount} match(es).`, "error");
+            if (failCount > 0) {
+                showToast(`Failed to sync ${failCount} match(es).`, true);
             }
         }
     </script>
