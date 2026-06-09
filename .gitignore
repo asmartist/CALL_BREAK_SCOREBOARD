@@ -30,3 +30,16 @@ Thumbs.db
 # Django specific
 /staticfiles/
 /media/
+
+# Cordova build artifacts
+cordova-app/platforms/
+cordova-app/plugins/
+cordova-app/node_modules/
+cordova-app/gradle.zip
+cordova-app/gradle-extracted/
+
+# Gradle setup script
+setup_gradle.ps1
+
+# Generated APKs
+*.apk
