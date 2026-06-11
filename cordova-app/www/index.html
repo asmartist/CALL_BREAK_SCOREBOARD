@@ -391,6 +391,24 @@
             color: #a5b4fc;
         }
 
+        #current-match-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        #current-match-table th, #current-match-table td {
+            padding: 0.4rem 0.2rem;
+            font-size: 0.8rem;
+            text-align: center;
+            border-bottom: 1px solid var(--card-border);
+        }
+
+        #current-match-table th:first-child, #current-match-table td:first-child {
+            text-align: left;
+            padding-left: 0.4rem;
+            font-weight: 700;
+        }
+
         /* Toast system */
         .toast {
             position: fixed;
@@ -464,6 +482,22 @@
             <div style="display: flex; gap: 0.8rem; align-items: center; justify-content: space-between;">
                 <button class="btn btn-secondary" style="width: 35%;" onclick="prevRound()">Back</button>
                 <button class="btn btn-primary" style="flex-grow: 1;" onclick="submitRoundState()" id="action-btn">Submit Bids</button>
+            </div>
+            <button class="btn btn-danger btn-secondary" style="margin-top: 1rem; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); color: var(--danger);" onclick="exitActiveMatch()">Exit & Restart Match</button>
+        </div>
+
+        <!-- Current Match Leaderboard Card -->
+        <div class="glass-card hidden" id="current-match-leaderboard-card" style="margin-top: 1.2rem;">
+            <h2>Current Match Standings</h2>
+            <div style="overflow-x: auto;">
+                <table id="current-match-table">
+                    <thead>
+                        <!-- dynamic -->
+                    </thead>
+                    <tbody id="current-match-body">
+                        <!-- dynamic -->
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
@@ -693,6 +727,87 @@
                 actBtn.textContent = currentActiveMatch.current_round_index === 12 ? 'Finish Match' : 'Submit Scores & Next';
                 actBtn.className = 'btn btn-success';
             }
+            renderCurrentMatchLeaderboard();
+        }
+
+        function exitActiveMatch() {
+            if (confirm("Are you sure you want to exit this match and restart? All unsaved current game progress will be lost.")) {
+                localStorage.removeItem('cb_mobile_active_game');
+                currentActiveMatch = null;
+                document.getElementById('calc-card').classList.add('hidden');
+                document.getElementById('current-match-leaderboard-card').classList.add('hidden');
+                document.getElementById('setup-card').classList.remove('hidden');
+            }
+        }
+
+        function renderCurrentMatchLeaderboard() {
+            const container = document.getElementById('current-match-leaderboard-card');
+            if (!currentActiveMatch) {
+                container.classList.add('hidden');
+                return;
+            }
+            container.classList.remove('hidden');
+
+            const thead = document.querySelector('#current-match-table thead');
+            const tbody = document.querySelector('#current-match-table tbody');
+            if (!thead || !tbody) return;
+
+            const players = currentActiveMatch.players;
+
+            thead.innerHTML = `
+                <tr>
+                    <th style="width: 60px;">Round</th>
+                    ${players.map(p => `<th style="text-align: center;">${p.name}</th>`).join('')}
+                </tr>
+            `;
+
+            tbody.innerHTML = '';
+
+            for (let i = 0; i < 13; i++) {
+                const round = currentActiveMatch.rounds[i];
+                const isComplete = i < currentActiveMatch.current_round_index;
+                
+                const row = document.createElement('tr');
+                let colsHTML = `<td><strong>R${round.round_no}</strong></td>`;
+                
+                players.forEach(player => {
+                    if (isComplete) {
+                        const res = round.results.find(r => r.player_id === player.id);
+                        const score = res ? parseFloat(res.score || 0) : 0;
+                        if (score < 0) {
+                            colsHTML += `<td style="text-align: center; color: var(--danger); font-weight: 600;">${score.toFixed(1)}</td>`;
+                        } else {
+                            colsHTML += `<td style="text-align: center; color: var(--accent); font-weight: 600;">+${score.toFixed(1)}</td>`;
+                        }
+                    } else {
+                        const bidObj = round.bids.find(b => b.player_id === player.id);
+                        if (bidObj) {
+                            colsHTML += `<td style="text-align: center; color: var(--text-muted); font-size: 0.8rem;">Bid: ${bidObj.bid}${bidObj.is_blind ? '(B)' : ''}</td>`;
+                        } else {
+                            colsHTML += `<td style="text-align: center; color: var(--text-muted);">-</td>`;
+                        }
+                    }
+                });
+                
+                row.innerHTML = colsHTML;
+                tbody.appendChild(row);
+            }
+
+            const totalRow = document.createElement('tr');
+            totalRow.style.borderTop = '2px solid var(--card-border)';
+            totalRow.style.background = 'rgba(255, 255, 255, 0.02)';
+            
+            let totalColsHTML = `<td><strong>Total</strong></td>`;
+            players.forEach(player => {
+                const totalScore = calculateCumulativeScore(player.id, currentActiveMatch.current_round_index);
+                if (totalScore < 0) {
+                    totalColsHTML += `<td style="text-align: center; color: var(--danger); font-weight: 800; font-size: 1rem;">${totalScore.toFixed(2)}</td>`;
+                } else {
+                    totalColsHTML += `<td style="text-align: center; color: #a5b4fc; font-weight: 800; font-size: 1rem;">${totalScore.toFixed(2)}</td>`;
+                }
+            });
+            totalRow.innerHTML = totalColsHTML;
+            tbody.appendChild(totalRow);
         }
 
         function calculateCumulativeScore(playerId, upToRoundIndex) {
@@ -808,6 +923,7 @@
                     
                     showToast("Match completed successfully!");
                     document.getElementById('calc-card').classList.add('hidden');
+                    document.getElementById('current-match-leaderboard-card').classList.add('hidden');
                     document.getElementById('setup-card').classList.remove('hidden');
                     switchTab('history');
                 }
