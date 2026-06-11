@@ -483,16 +483,24 @@
                 <button class="btn btn-secondary" style="width: 35%;" onclick="prevRound()">Back</button>
                 <button class="btn btn-primary" style="flex-grow: 1;" onclick="submitRoundState()" id="action-btn">Submit Bids</button>
             </div>
-            <button class="btn btn-danger btn-secondary" style="margin-top: 1rem; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); color: var(--danger);" onclick="exitActiveMatch()">Exit & Restart Match</button>
+            <div style="display: flex; gap: 0.8rem; margin-top: 1rem;">
+                <button class="btn btn-secondary" style="flex: 1; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.2); color: var(--accent);" onclick="endActiveMatch()">End Match</button>
+                <button class="btn btn-secondary" style="flex: 1; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); color: var(--danger);" onclick="discardActiveMatch()">Discard Match</button>
+            </div>
         </div>
 
         <!-- Current Match Leaderboard Card -->
         <div class="glass-card hidden" id="current-match-leaderboard-card" style="margin-top: 1.2rem;">
-            <h2>Current Match Standings</h2>
+            <h2>Current Match Leaderboard</h2>
             <div style="overflow-x: auto;">
                 <table id="current-match-table">
                     <thead>
-                        <!-- dynamic -->
+                        <tr>
+                            <th style="width: 50px; text-align: center; color: #a5b4fc;">Rank</th>
+                            <th style="color: #a5b4fc;">Player</th>
+                            <th style="text-align: center; color: #a5b4fc;">Score</th>
+                            <th style="text-align: center; color: #a5b4fc;">Bid</th>
+                        </tr>
                     </thead>
                     <tbody id="current-match-body">
                         <!-- dynamic -->
@@ -505,7 +513,10 @@
     <!-- Screen 2: History -->
     <div id="screen-history" class="screen hidden">
         <div class="glass-card">
-            <h2>Match History</h2>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.8rem;">
+                <h2>Match History</h2>
+                <button class="btn btn-secondary" onclick="switchTab('leaderboard')" style="width: auto; padding: 0.4rem 0.8rem; font-size: 0.8rem; height: 32px; display: flex; align-items: center; justify-content: center; gap: 0.3rem;">Career Stats 🏆</button>
+            </div>
             <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.8rem;">Locally stored matches played on this device.</p>
             <div id="history-list">
                 <!-- dynamic -->
@@ -730,13 +741,43 @@
             renderCurrentMatchLeaderboard();
         }
 
-        function exitActiveMatch() {
-            if (confirm("Are you sure you want to exit this match and restart? All unsaved current game progress will be lost.")) {
+        function endActiveMatch() {
+            if (!currentActiveMatch) return;
+            if (confirm("Are you sure you want to end this match? Current progress will be saved in your match history.")) {
+                const playedRounds = currentActiveMatch.rounds.slice(0, currentActiveMatch.current_round_index);
+                
+                localMatches.unshift({
+                    id: currentActiveMatch.id,
+                    status: 'MATCH_COMPLETE',
+                    version: currentActiveMatch.version,
+                    trump_suit: currentActiveMatch.trump_suit,
+                    created_at: currentActiveMatch.created_at,
+                    completed_at: new Date().toISOString(),
+                    players: currentActiveMatch.players,
+                    rounds: playedRounds,
+                    synced: false
+                });
+                
+                saveLocalData();
+                localStorage.removeItem('cb_mobile_active_game');
+                currentActiveMatch = null;
+                
+                showToast("Match ended and saved to history!");
+                document.getElementById('calc-card').classList.add('hidden');
+                document.getElementById('current-match-leaderboard-card').classList.add('hidden');
+                document.getElementById('setup-card').classList.remove('hidden');
+                switchTab('history');
+            }
+        }
+
+        function discardActiveMatch() {
+            if (confirm("Are you sure you want to discard this match? All active progress will be lost and nothing will be saved to history.")) {
                 localStorage.removeItem('cb_mobile_active_game');
                 currentActiveMatch = null;
                 document.getElementById('calc-card').classList.add('hidden');
                 document.getElementById('current-match-leaderboard-card').classList.add('hidden');
                 document.getElementById('setup-card').classList.remove('hidden');
+                showToast("Match discarded.");
             }
         }
 
@@ -748,66 +789,49 @@
             }
             container.classList.remove('hidden');
 
-            const thead = document.querySelector('#current-match-table thead');
             const tbody = document.querySelector('#current-match-table tbody');
-            if (!thead || !tbody) return;
+            if (!tbody) return;
 
-            const players = currentActiveMatch.players;
+            const round = currentActiveMatch.rounds[currentActiveMatch.current_round_index];
+            const players = currentActiveMatch.players.map(player => {
+                const totalScore = calculateCumulativeScore(player.id, currentActiveMatch.current_round_index);
+                const bidObj = round ? round.bids.find(b => b.player_id === player.id) : null;
+                const resObj = round ? round.results.find(r => r.player_id === player.id) : null;
+                return {
+                    name: player.name,
+                    score: totalScore,
+                    bid: bidObj ? bidObj.bid : null,
+                    is_blind: bidObj ? bidObj.is_blind : false,
+                    tricks: resObj ? resObj.tricks_won : 0,
+                    status: round ? round.status : 'BIDDING'
+                };
+            });
 
-            thead.innerHTML = `
-                <tr>
-                    <th style="width: 60px;">Round</th>
-                    ${players.map(p => `<th style="text-align: center;">${p.name}</th>`).join('')}
-                </tr>
-            `;
+            // Sort players by score in descending order
+            players.sort((a, b) => b.score - a.score);
 
             tbody.innerHTML = '';
-
-            for (let i = 0; i < 13; i++) {
-                const round = currentActiveMatch.rounds[i];
-                const isComplete = i < currentActiveMatch.current_round_index;
-                
+            players.forEach((player, idx) => {
                 const row = document.createElement('tr');
-                let colsHTML = `<td><strong>R${round.round_no}</strong></td>`;
                 
-                players.forEach(player => {
-                    if (isComplete) {
-                        const res = round.results.find(r => r.player_id === player.id);
-                        const score = res ? parseFloat(res.score || 0) : 0;
-                        if (score < 0) {
-                            colsHTML += `<td style="text-align: center; color: var(--danger); font-weight: 600;">${score.toFixed(1)}</td>`;
-                        } else {
-                            colsHTML += `<td style="text-align: center; color: var(--accent); font-weight: 600;">+${score.toFixed(1)}</td>`;
-                        }
-                    } else {
-                        const bidObj = round.bids.find(b => b.player_id === player.id);
-                        if (bidObj) {
-                            colsHTML += `<td style="text-align: center; color: var(--text-muted); font-size: 0.8rem;">Bid: ${bidObj.bid}${bidObj.is_blind ? '(B)' : ''}</td>`;
-                        } else {
-                            colsHTML += `<td style="text-align: center; color: var(--text-muted);">-</td>`;
-                        }
-                    }
-                });
-                
-                row.innerHTML = colsHTML;
-                tbody.appendChild(row);
-            }
-
-            const totalRow = document.createElement('tr');
-            totalRow.style.borderTop = '2px solid var(--card-border)';
-            totalRow.style.background = 'rgba(255, 255, 255, 0.02)';
-            
-            let totalColsHTML = `<td><strong>Total</strong></td>`;
-            players.forEach(player => {
-                const totalScore = calculateCumulativeScore(player.id, currentActiveMatch.current_round_index);
-                if (totalScore < 0) {
-                    totalColsHTML += `<td style="text-align: center; color: var(--danger); font-weight: 800; font-size: 1rem;">${totalScore.toFixed(2)}</td>`;
+                let bidHTML = '';
+                if (player.status === 'BIDDING') {
+                    bidHTML = `${player.bid || 2}${player.is_blind ? '(B)' : ''}`;
                 } else {
-                    totalColsHTML += `<td style="text-align: center; color: #a5b4fc; font-weight: 800; font-size: 1rem;">${totalScore.toFixed(2)}</td>`;
+                    bidHTML = `${player.tricks} / ${player.bid || 2}${player.is_blind ? '(B)' : ''}`;
                 }
+
+                const scoreText = player.score.toFixed(2);
+                const scoreStyle = player.score < 0 ? 'color: var(--danger); font-weight: 700;' : 'color: var(--accent); font-weight: 700;';
+
+                row.innerHTML = `
+                    <td style="text-align: center; font-weight: 800;">#${idx + 1}</td>
+                    <td style="font-weight: 700;">${player.name}</td>
+                    <td style="text-align: center; ${scoreStyle}">${scoreText}</td>
+                    <td style="text-align: center;">${bidHTML}</td>
+                `;
+                tbody.appendChild(row);
             });
-            totalRow.innerHTML = totalColsHTML;
-            tbody.appendChild(totalRow);
         }
 
         function calculateCumulativeScore(playerId, upToRoundIndex) {
