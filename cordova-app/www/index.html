@@ -526,6 +526,18 @@
         let localMatches = []; // List of all matches stored locally
         let activeTab = 'play';
 
+        function generateUUID() {
+            if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+                return crypto.randomUUID();
+            }
+            // Fallback RFC4122 version 4 compliant UUID generator
+            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                const r = Math.random() * 16 | 0;
+                const v = c === 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+            });
+        }
+
         window.onload = function() {
             loadLocalData();
             checkActiveGame();
@@ -541,25 +553,34 @@
         }
 
         function loadLocalData() {
-            const saved = localStorage.getItem('cb_mobile_matches');
-            localMatches = saved ? JSON.parse(saved) : [];
+            try {
+                const saved = localStorage.getItem('cb_mobile_matches');
+                localMatches = saved ? JSON.parse(saved) : [];
+            } catch (err) {
+                console.error("Error loading local matches:", err);
+                localMatches = [];
+            }
         }
 
         function saveLocalData() {
             localStorage.setItem('cb_mobile_matches', JSON.stringify(localMatches));
         }
-                badge.classList.add('offline');
-                label.textContent = 'Offline';
-            }
-        }
 
         function checkActiveGame() {
-            const savedGame = localStorage.getItem('cb_mobile_active_game');
-            if (savedGame) {
-                currentActiveMatch = JSON.parse(savedGame);
-                document.getElementById('setup-card').classList.add('hidden');
-                document.getElementById('calc-card').classList.remove('hidden');
-                renderActiveRound();
+            try {
+                const savedGame = localStorage.getItem('cb_mobile_active_game');
+                if (savedGame) {
+                    currentActiveMatch = JSON.parse(savedGame);
+                    document.getElementById('setup-card').classList.add('hidden');
+                    document.getElementById('calc-card').classList.remove('hidden');
+                    renderActiveRound();
+                }
+            } catch (err) {
+                console.error("Error loading active game, clearing state:", err);
+                localStorage.removeItem('cb_mobile_active_game');
+                currentActiveMatch = null;
+                document.getElementById('setup-card').classList.remove('hidden');
+                document.getElementById('calc-card').classList.add('hidden');
             }
         }
 
@@ -584,13 +605,13 @@
             const p4 = document.getElementById('p4-name').value.trim() || 'Player 4';
 
             const players = [p1, p2, p3, p4].map((name, idx) => ({
-                id: crypto.randomUUID(),
+                id: generateUUID(),
                 name: name,
                 seat_no: idx + 1
             }));
 
             currentActiveMatch = {
-                id: crypto.randomUUID(),
+                id: generateUUID(),
                 status: 'BIDDING',
                 version: 1,
                 trump_suit: 'Spades ♠',
@@ -599,7 +620,7 @@
                 players: players,
                 current_round_index: 0,
                 rounds: Array.from({ length: 13 }, (_, idx) => ({
-                    id: crypto.randomUUID(),
+                    id: generateUUID(),
                     round_no: idx + 1,
                     status: 'BIDDING', // 'BIDDING' or 'RESULTS'
                     locked: false,
