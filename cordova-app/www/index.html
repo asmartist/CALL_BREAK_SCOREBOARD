@@ -489,45 +489,17 @@
             </div>
         </div>
 
-        <!-- Current Match Leaderboard Card -->
-        <div class="glass-card hidden" id="current-match-leaderboard-card" style="margin-top: 1.2rem;">
-            <h2>Current Match Leaderboard</h2>
-            <div style="overflow-x: auto;">
-                <table id="current-match-table">
-                    <thead>
-                        <tr>
-                            <th style="width: 50px; text-align: center; color: #a5b4fc;">Rank</th>
-                            <th style="color: #a5b4fc;">Player</th>
-                            <th style="text-align: center; color: #a5b4fc;">Score</th>
-                            <th style="text-align: center; color: #a5b4fc;">Bid</th>
-                        </tr>
-                    </thead>
-                    <tbody id="current-match-body">
-                        <!-- dynamic -->
-                    </tbody>
-                </table>
-            </div>
-        </div>
+
     </div>
 
     <!-- Screen 2: History -->
     <div id="screen-history" class="screen hidden">
-        <div class="glass-card">
+        <!-- Career Stats Card (starts collapsed) -->
+        <div class="glass-card hidden" id="career-stats-card" style="margin-bottom: 1.2rem;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.8rem;">
-                <h2>Match History</h2>
-                <button class="btn btn-secondary" onclick="switchTab('leaderboard')" style="width: auto; padding: 0.4rem 0.8rem; font-size: 0.8rem; height: 32px; display: flex; align-items: center; justify-content: center; gap: 0.3rem;">Career Stats 🏆</button>
+                <h2>Career Stats</h2>
+                <button class="btn btn-secondary" onclick="toggleCareerStats()" style="width: auto; padding: 0.4rem 0.8rem; font-size: 0.8rem; height: 32px;">Close</button>
             </div>
-            <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.8rem;">Locally stored matches played on this device.</p>
-            <div id="history-list">
-                <!-- dynamic -->
-            </div>
-        </div>
-    </div>
-
-    <!-- Screen 3: Leaderboard -->
-    <div id="screen-leaderboard" class="screen hidden">
-        <div class="glass-card">
-            <h2>Career Stats</h2>
             <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.8rem;">Aggregated local score analytics for all players.</p>
             <div style="overflow-x: auto;">
                 <table>
@@ -546,6 +518,49 @@
                 </table>
             </div>
         </div>
+
+        <div class="glass-card" id="history-main-card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.8rem;">
+                <h2>Match History</h2>
+                <button class="btn btn-secondary" onclick="toggleCareerStats()" style="width: auto; padding: 0.4rem 0.8rem; font-size: 0.8rem; height: 32px; display: flex; align-items: center; justify-content: center; gap: 0.3rem;">Career Stats 🏆</button>
+            </div>
+            <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.8rem;">Locally stored matches played on this device.</p>
+            <div id="history-list">
+                <!-- dynamic -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Screen 3: Standings (Current Match Leaderboard) -->
+    <div id="screen-leaderboard" class="screen hidden">
+        <div class="glass-card" id="current-match-leaderboard-card">
+            <h2>Current Match Leaderboard</h2>
+            <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.8rem;">Live rankings and scores for the active match.</p>
+            
+            <div id="active-match-tab-container">
+                <div style="overflow-x: auto;">
+                    <table id="current-match-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 50px; text-align: center; color: #a5b4fc;">Rank</th>
+                                <th style="color: #a5b4fc;">Player</th>
+                                <th style="text-align: center; color: #a5b4fc;">Score</th>
+                                <th style="text-align: center; color: #a5b4fc;">Bid</th>
+                            </tr>
+                        </thead>
+                        <tbody id="current-match-body">
+                            <!-- dynamic -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="no-active-match-msg" class="hidden" style="text-align: center; padding: 2rem 1rem;">
+                <span style="font-size: 2.5rem; display: block; margin-bottom: 1rem;">🎴</span>
+                <p style="color: var(--text-muted); font-size: 0.95rem; font-weight: 500;">No active match currently in progress.</p>
+                <p style="color: var(--text-muted); font-size: 0.8rem; margin-top: 0.2rem;">Start a new local match on the <strong>Play</strong> tab.</p>
+            </div>
+        </div>
     </div>
 
     <!-- Bottom Navigation Bar -->
@@ -560,7 +575,7 @@
         </div>
         <div class="tab-item" onclick="switchTab('leaderboard')">
             <span class="tab-icon">🏆</span>
-            <span class="tab-label">Leaderboard</span>
+            <span class="tab-label">Standings</span>
         </div>
     </nav>
 
@@ -639,8 +654,14 @@
 
             activeTab = tabId;
 
-            if (tabId === 'history') renderHistory();
-            if (tabId === 'leaderboard') renderLeaderboard();
+            if (tabId === 'history') {
+                document.getElementById('career-stats-card').classList.add('hidden');
+                document.getElementById('history-main-card').classList.remove('hidden');
+                renderHistory();
+            }
+            if (tabId === 'leaderboard') {
+                renderCurrentMatchLeaderboard();
+            }
         }
 
         function initMobileGame() {
@@ -764,7 +785,6 @@
                 
                 showToast("Match ended and saved to history!");
                 document.getElementById('calc-card').classList.add('hidden');
-                document.getElementById('current-match-leaderboard-card').classList.add('hidden');
                 document.getElementById('setup-card').classList.remove('hidden');
                 switchTab('history');
             }
@@ -775,19 +795,22 @@
                 localStorage.removeItem('cb_mobile_active_game');
                 currentActiveMatch = null;
                 document.getElementById('calc-card').classList.add('hidden');
-                document.getElementById('current-match-leaderboard-card').classList.add('hidden');
                 document.getElementById('setup-card').classList.remove('hidden');
                 showToast("Match discarded.");
             }
         }
 
-        function renderCurrentMatchLeaderboard() {
-            const container = document.getElementById('current-match-leaderboard-card');
+            const activeContainer = document.getElementById('active-match-tab-container');
+            const noActiveMsg = document.getElementById('no-active-match-msg');
+            
             if (!currentActiveMatch) {
-                container.classList.add('hidden');
+                if (activeContainer) activeContainer.classList.add('hidden');
+                if (noActiveMsg) noActiveMsg.classList.remove('hidden');
                 return;
             }
-            container.classList.remove('hidden');
+            
+            if (activeContainer) activeContainer.classList.remove('hidden');
+            if (noActiveMsg) noActiveMsg.classList.add('hidden');
 
             const tbody = document.querySelector('#current-match-table tbody');
             if (!tbody) return;
@@ -947,7 +970,6 @@
                     
                     showToast("Match completed successfully!");
                     document.getElementById('calc-card').classList.add('hidden');
-                    document.getElementById('current-match-leaderboard-card').classList.add('hidden');
                     document.getElementById('setup-card').classList.remove('hidden');
                     switchTab('history');
                 }
@@ -993,7 +1015,20 @@
             });
         }
 
-        function renderLeaderboard() {
+        function toggleCareerStats() {
+            const statsCard = document.getElementById('career-stats-card');
+            const mainCard = document.getElementById('history-main-card');
+            if (statsCard.classList.contains('hidden')) {
+                renderCareerStats();
+                statsCard.classList.remove('hidden');
+                mainCard.classList.add('hidden');
+            } else {
+                statsCard.classList.add('hidden');
+                mainCard.classList.remove('hidden');
+            }
+        }
+
+        function renderCareerStats() {
             const playerStats = {}; // name -> {wins: 0, games: 0, totalScore: 0, high: -9999, bidCount: 0, bidSum: 0, blindBids: 0, blindWins: 0}
             
             localMatches.forEach(match => {
